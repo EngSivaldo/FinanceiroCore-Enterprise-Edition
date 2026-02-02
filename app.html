@@ -3,139 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinanceiroCore | Dashboard</title>
+    <title>FinanceiroCore | Enterprise Color Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; }
-        .sidebar { width: 320px; @apply bg-white border-l border-slate-200 h-screen overflow-y-auto p-6 flex flex-col gap-6; }
-        .main-content { @apply flex-1 h-screen overflow-y-auto p-8; }
-        .data-table-container { @apply bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden; }
-        .nav-tab { @apply px-4 py-2 rounded-xl font-bold text-sm transition-all; }
-        .nav-active { @apply bg-indigo-600 text-white shadow-lg shadow-indigo-200; }
-        .nav-inactive { @apply text-slate-500 hover:bg-slate-100; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; overflow: hidden; }
         
-        #modalOverlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); z-index: 999;
-            align-items: center; justify-content: center;
+        /* Sidebar Fixa */
+        .sidebar { 
+            width: 380px; 
+            @apply bg-slate-50 border-l border-slate-200 h-screen p-6 flex flex-col gap-6 shadow-2xl;
+            position: fixed; right: 0; top: 0; z-index: 50;
         }
 
-        .editing-row { @apply bg-indigo-50/50 ring-2 ring-indigo-500 ring-inset; }
-        .edit-input { @apply w-full bg-white border border-indigo-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-indigo-500; }
+        .main-content { margin-right: 380px; @apply h-screen overflow-y-auto p-8 pb-20; }
+
+        /* Scroll Interno na Sidebar para não quebrar */
+        .scroll-list { max-height: 240px; overflow-y: auto; @apply pr-2 space-y-2; }
+        .scroll-list::-webkit-scrollbar { width: 4px; }
+        .scroll-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* RESTAURAÇÃO DAS CORES DE ACENTO */
+        .card-accent-blue { border-left: 5px solid #3b82f6 !important; @apply bg-white shadow-sm; }
+        .card-accent-amber { border-left: 5px solid #f59e0b !important; @apply bg-white shadow-sm; }
+        
+        /* BADGES DE PAGAMENTO */
+        .badge-pix { @apply bg-emerald-100 text-emerald-700 border-emerald-200; }
+        .badge-credito-alice { @apply bg-purple-100 text-purple-700 border-purple-200; }
+        .badge-credito-lucas { @apply bg-blue-100 text-blue-700 border-blue-200; }
+        .badge-debito { @apply bg-slate-100 text-slate-700 border-slate-200; }
+
+        #modalOverlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); z-index: 100;
+            align-items: center; justify-content: center;
+        }
     </style>
 </head>
-<body class="text-slate-900 flex">
+<body class="text-slate-900">
 
     <div id="modalOverlay">
-        <div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full mx-4">
-            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-2xl mb-4 mx-auto">🗑️</div>
-            <h3 class="text-xl font-extrabold text-slate-800 text-center mb-2">Excluir Registro?</h3>
-            <p class="text-slate-500 text-center text-sm mb-6">Esta ação removerá permanentemente os dados do seu histórico mensal.</p>
-            <div class="flex gap-3">
-                <button onclick="fecharModal()" class="flex-1 py-3 rounded-2xl font-bold text-slate-500 bg-slate-100">Voltar</button>
-                <button id="btnConfirmarDeletar" class="flex-1 py-3 rounded-2xl font-bold text-white bg-red-500 shadow-lg shadow-red-100">Confirmar</button>
+        <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full text-center">
+            <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-3xl mb-6 mx-auto">🗑️</div>
+            <h3 class="text-2xl font-extrabold text-slate-800 mb-2">Excluir?</h3>
+            <div class="flex gap-4 mt-8">
+                <button onclick="fecharModal()" class="flex-1 py-4 rounded-2xl font-bold text-slate-400 bg-slate-100">Voltar</button>
+                <button id="btnConfirmarDeletar" class="flex-1 py-4 rounded-2xl font-bold text-white bg-red-500 shadow-lg shadow-red-100">Excluir</button>
             </div>
         </div>
     </div>
 
-    <div class="main-content">
-        <header class="flex justify-between items-center mb-8">
-            <div class="flex items-center gap-3">
-                <div class="bg-indigo-600 p-2 rounded-xl text-white">💎</div>
+    <main class="main-content">
+        <header class="flex justify-between items-center mb-10">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl shadow-indigo-100">💎</div>
                 <div>
-                    <h1 class="text-2xl font-extrabold tracking-tight">Financeiro<span class="text-indigo-600">Core</span></h1>
-                    <p class="text-xs text-slate-400 font-medium">Gestão profissional de despesas e limites</p>
+                    <h1 class="text-2xl font-extrabold tracking-tight text-slate-800 italic">Financeiro<span class="text-indigo-600">Core</span></h1>
+                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em]">Enterprise Edition v6.3</p>
                 </div>
             </div>
 
-            <div id="monthSelector" class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200"></div>
-
-            <nav class="flex gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-                <button onclick="mostrarAba('variaveis')" id="btn-variaveis" class="nav-tab nav-active">Variáveis</button>
-                <button onclick="mostrarAba('fixas')" id="btn-fixas" class="nav-tab nav-inactive">Fixas</button>
-            </nav>
+            <div class="flex items-center gap-4">
+                <div id="monthSelector" class="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm"></div>
+                <nav class="flex gap-1 bg-slate-200 p-1 rounded-2xl">
+                    <button onclick="mostrarAba('variaveis')" id="btn-variaveis" class="px-6 py-2 rounded-xl font-bold text-sm transition-all bg-white text-indigo-600 shadow-sm">Variáveis</button>
+                    <button onclick="mostrarAba('fixas')" id="btn-fixas" class="px-6 py-2 rounded-xl font-bold text-sm transition-all text-slate-500">Fixas</button>
+                </nav>
+            </div>
         </header>
 
-        <div id="abaVariaveis" class="space-y-6">
-            <section class="data-table-container">
-                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
-                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 bg-indigo-500 rounded-full"></span>
-                        Transações: <span id="currentPeriodLabel" class="text-indigo-600 uppercase tracking-tighter">FEVEREIRO / 2026</span>
-                    </h3>
-                    <button onclick="exportarExcel()" class="text-xs font-bold bg-white border border-slate-200 px-4 py-2 rounded-xl hover:shadow-md transition-all">Exportar Planilha</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-bold tracking-widest">
-                            <tr>
-                                <th class="px-6 py-4">Data/Hora</th>
-                                <th class="px-6 py-4">Descrição</th>
-                                <th class="px-6 py-4">Local</th>
-                                <th class="px-6 py-4">Pagamento</th>
-                                <th class="px-6 py-4 text-right">Valor</th>
-                                <th class="px-6 py-4 text-center">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela" class="text-sm divide-y divide-slate-100"></tbody>
-                    </table>
+        <div id="abaVariaveis" class="space-y-8">
+            <section class="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+                <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-6">Novo Lançamento</h4>
+                <div class="grid grid-cols-1 md:grid-cols-7 gap-4 items-end">
+                    <div class="md:col-span-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1">Data/Hora</label><div class="flex gap-1"><input id="data" type="date" class="w-full bg-slate-50 border-none rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 shadow-inner"><input id="hora" type="time" class="w-full bg-slate-50 border-none rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 shadow-inner"></div></div>
+                    <div class="md:col-span-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1">Descrição</label><input id="desc" class="w-full bg-slate-50 border-none rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 shadow-inner" placeholder="O que?"></div>
+                    <div class="md:col-span-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1">Local</label><input id="local" class="w-full bg-slate-50 border-none rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 shadow-inner" placeholder="Onde?"></div>
+                    <div class="md:col-span-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1">Valor R$</label><input id="valor" type="number" class="w-full bg-slate-50 border-none rounded-xl p-3 text-xs font-black focus:ring-2 focus:ring-indigo-500 shadow-inner" placeholder="0.00"></div>
+                    <div class="md:col-span-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1">Pagamento</label><select id="pagamento" class="w-full bg-slate-50 border-none rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 shadow-inner"><option>Pix</option><option>Débito</option><option>Crédito Alice</option><option>Crédito Lucas</option></select></div>
+                    <button onclick="add()" class="md:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-indigo-100 uppercase text-xs tracking-widest">Registrar Gasto</button>
                 </div>
             </section>
 
-            <section class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200">
-                <div class="grid grid-cols-1 md:grid-cols-7 gap-4 items-end">
-                    <div class="md:col-span-1"><label class="text-[10px] font-bold text-slate-400 uppercase ml-2 mb-1 block">Quando</label><div class="flex gap-1"><input id="data" type="date" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:border-indigo-500"><input id="hora" type="time" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:border-indigo-500"></div></div>
-                    <div class="md:col-span-1"><label class="text-[10px] font-bold text-slate-400 uppercase ml-2 mb-1 block">O que comprou?</label><input id="desc" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:border-indigo-500" placeholder="Ex: Mercado"></div>
-                    <div class="md:col-span-1"><label class="text-[10px] font-bold text-slate-400 uppercase ml-2 mb-1 block">Onde?</label><input id="local" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:border-indigo-500" placeholder="Loja/Local"></div>
-                    <div class="md:col-span-1"><label class="text-[10px] font-bold text-slate-400 uppercase ml-2 mb-1 block">Valor R$</label><input id="valor" type="number" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:border-indigo-500 font-bold" placeholder="0.00"></div>
-                    <div class="md:col-span-1"><label class="text-[10px] font-bold text-slate-400 uppercase ml-2 mb-1 block">Pagamento</label><select id="pagamento" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:border-indigo-500"><option>Pix</option><option>Débito</option><option>Crédito Alice</option><option>Crédito Lucas</option></select></div>
-                    <button onclick="add()" class="md:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-2xl transition-all shadow-lg shadow-indigo-100 uppercase text-xs">Adicionar Lançamento</button>
+            <section class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-white">
+                    <h3 id="currentPeriodLabel" class="font-extrabold text-slate-800 uppercase tracking-tight italic">FEVEREIRO / 2026</h3>
+                    <button onclick="exportarExcel()" class="text-[10px] font-black uppercase text-slate-400 hover:text-indigo-600 transition-colors">Exportar Excel</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-black tracking-widest">
+                            <tr>
+                                <th class="px-8 py-4">Data/Hora</th>
+                                <th class="px-8 py-4">Descrição</th>
+                                <th class="px-8 py-4">Local</th>
+                                <th class="px-8 py-4">Pagamento</th>
+                                <th class="px-8 py-4 text-right">Valor</th>
+                                <th class="px-8 py-4 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela" class="divide-y divide-slate-50 bg-white"></tbody>
+                    </table>
                 </div>
             </section>
         </div>
 
-        <div id="abaFixas" class="hidden max-w-4xl mx-auto">
-            <section class="bg-white p-8 rounded-[2rem] border border-slate-200 mb-6">
-                <h2 class="text-xl font-bold text-slate-800 mb-6">📌 Cadastro de Custos Recorrentes</h2>
+        <div id="abaFixas" class="hidden max-w-4xl mx-auto space-y-6">
+            <section class="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm border-t-4 border-t-indigo-600">
+                <h2 class="text-xl font-extrabold text-slate-800 mb-8 flex items-center gap-3">📌 Gestão de Despesas Fixas</h2>
                 <div class="grid grid-cols-2 gap-4">
-                    <input id="fixaDesc" placeholder="Descrição do Custo" class="border border-slate-200 rounded-xl p-3 text-sm outline-none">
-                    <input id="fixaValor" type="number" placeholder="Valor Mensal R$" class="border border-slate-200 rounded-xl p-3 text-sm outline-none font-bold">
-                    <input id="fixaData" type="date" class="border border-slate-200 rounded-xl p-3 text-sm outline-none">
-                    <input id="fixaLocal" placeholder="Categoria (Ex: Casa)" class="border border-slate-200 rounded-xl p-3 text-sm outline-none">
-                    <button onclick="addFixa()" class="col-span-2 bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm">Cadastrar Despesa Fixa</button>
+                    <input id="fixaDesc" placeholder="Descrição do Custo" class="bg-slate-50 rounded-2xl p-4 text-sm border-none shadow-inner">
+                    <input id="fixaValor" type="number" placeholder="Valor Mensal R$" class="bg-slate-50 rounded-2xl p-4 text-sm font-bold border-none shadow-inner">
+                    <input id="fixaData" type="date" class="bg-slate-50 rounded-2xl p-4 text-sm border-none shadow-inner">
+                    <input id="fixaLocal" placeholder="Local/Categoria" class="bg-slate-50 rounded-2xl p-4 text-sm border-none shadow-inner">
+                    <button onclick="addFixa()" class="col-span-2 bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition-all shadow-xl">Cadastrar Despesa Fixa</button>
                 </div>
             </section>
             <div id="listaFixas" class="space-y-3"></div>
         </div>
-    </div>
+    </main>
 
     <aside class="sidebar">
         <div>
-            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">CONTROLE DE CAIXA</h4>
-            <div class="space-y-4">
-                <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
-                    <span class="text-[10px] font-bold text-indigo-400 uppercase block mb-1">Limite Mensal</span>
-                    <input id="limiteInput" type="number" class="bg-transparent font-extrabold text-2xl text-indigo-700 outline-none w-full" onchange="definirLimite()">
-                    <span id="saldoLimite" class="text-xs font-semibold block mt-1">Saldo: R$ 0,00</span>
-                </div>
-                <div class="bg-slate-900 p-5 rounded-2xl shadow-xl shadow-slate-200">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase block mb-1">Gasto Total do Mês</span>
-                    <span id="total" class="text-3xl font-black text-white tracking-tighter">R$ 0,00</span>
-                </div>
+            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Saúde Financeira</h4>
+            <div id="cardLimite" class="bg-indigo-600 p-6 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100 mb-4 transition-all duration-500">
+                <span class="text-[10px] font-bold text-white/60 uppercase block mb-1">Limite Estabelecido</span>
+                <input id="limiteInput" type="number" class="bg-transparent font-extrabold text-3xl outline-none w-full text-white" onchange="definirLimite()">
+                <div class="progress-bg bg-white/20 h-2 rounded-full mt-4 overflow-hidden"><div id="progressFill" class="h-full bg-white transition-all duration-700"></div></div>
+                <span id="saldoLimite" class="text-[10px] font-bold block mt-3 text-indigo-100 uppercase">Disponível: R$ 0,00</span>
+            </div>
+            
+            <div class="bg-slate-900 p-6 rounded-[3rem] shadow-xl border border-white/10">
+                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Gasto Acumulado</span>
+                <span id="total" class="text-3xl font-black text-white italic tracking-tighter">R$ 0,00</span>
             </div>
         </div>
 
-        <hr class="border-slate-100">
+        <div class="flex flex-col flex-1 gap-6 overflow-hidden">
+            <div class="flex flex-col">
+                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-500"></span> Canais de Saída
+                </h4>
+                <div id="totaisPag" class="scroll-list"></div>
+            </div>
 
-        <div>
-            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">💳 POR PAGAMENTO</h4>
-            <div id="totaisPag" class="space-y-2"></div>
+            <div class="flex flex-col">
+                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span> Principais Locais
+                </h4>
+                <div id="totaisLocal" class="scroll-list"></div>
+            </div>
         </div>
-
-        <div>
-            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">🏪 POR LOCAL</h4>
-            <div id="totaisLocal" class="space-y-2 max-h-[250px] overflow-y-auto pr-2"></div>
+        
+        <div class="pt-4 border-t border-slate-200 text-center">
+            <p class="text-[9px] font-bold text-slate-300 uppercase tracking-[0.3em]">FinanceiroCore © 2026</p>
         </div>
     </aside>
 
