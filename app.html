@@ -14,7 +14,10 @@
         .nav-active { @apply bg-indigo-600 text-white shadow-md; }
         .nav-inactive { @apply text-slate-500 hover:bg-slate-200; }
         
-        /* Custom scrollbar para tabelas longas */
+        /* Estilos para Edição */
+        .editing-row { @apply bg-indigo-50/50 ring-2 ring-indigo-500 ring-inset; }
+        .edit-input { @apply w-full bg-white border border-indigo-300 rounded px-2 py-1 text-xs focus:ring-2 focus:ring-indigo-200 outline-none font-medium text-slate-700; }
+        
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
@@ -28,8 +31,7 @@
                 <h1 class="text-xl font-extrabold tracking-tight">Financeiro<span class="text-indigo-400">Core</span></h1>
             </div>
 
-            <div id="monthSelector" class="flex items-center gap-2 bg-slate-800 p-1 rounded-xl border border-slate-700">
-                </div>
+            <div id="monthSelector" class="flex items-center gap-2 bg-slate-800 p-1 rounded-xl border border-slate-700"></div>
 
             <nav class="flex gap-2 bg-slate-800 p-1 rounded-xl">
                 <button onclick="mostrarAba('variaveis')" id="btn-variaveis" class="nav-tab nav-active">Variáveis</button>
@@ -43,9 +45,7 @@
         <section id="dashboardMin" class="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div class="kpi-card-mini border-l-4 border-l-purple-500">
                 <span class="text-[10px] uppercase font-bold text-slate-400">Limite</span>
-                <div class="flex items-center gap-2">
-                    <input id="limiteInput" type="number" class="w-full font-bold text-slate-700 outline-none" onchange="definirLimite()">
-                </div>
+                <input id="limiteInput" type="number" class="font-bold text-slate-700 outline-none bg-transparent" onchange="definirLimite()">
             </div>
             <div class="kpi-card-mini">
                 <span class="text-[10px] uppercase font-bold text-slate-400">Saldo Disponível</span>
@@ -57,67 +57,65 @@
             </div>
             <div class="kpi-card-mini col-span-1">
                 <span class="text-[10px] uppercase font-bold text-slate-400">💳 Pagamentos</span>
-                <div id="totaisPag" class="text-[10px] leading-tight mt-1 truncate"></div>
+                <div id="totaisPag" class="text-[10px] leading-tight mt-1 truncate font-medium text-slate-600"></div>
             </div>
             <div class="kpi-card-mini col-span-1">
                 <span class="text-[10px] uppercase font-bold text-slate-400">🏪 Locais</span>
-                <div id="totaisLocal" class="text-[10px] leading-tight mt-1 truncate"></div>
+                <div id="totaisLocal" class="text-[10px] leading-tight mt-1 truncate font-medium text-slate-600"></div>
             </div>
         </section>
 
         <div id="abaVariaveis" class="space-y-4">
             <section class="data-table-container">
                 <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                    <h3 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-tight">
                         <span class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
-                        Transações de <span id="currentPeriodLabel" class="text-indigo-600 uppercase">Janeiro</span>
+                        Transações: <span id="currentPeriodLabel" class="text-indigo-600">---</span>
                     </h3>
                     <button onclick="exportarExcel()" class="text-[10px] font-bold bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-all">EXPORTAR EXCEL</button>
                 </div>
-                <div class="overflow-x-auto max-h-[500px]">
+                <div class="overflow-x-auto max-h-[600px]">
                     <table class="w-full text-left border-collapse">
-                        <thead class="sticky top-0 bg-white shadow-sm text-slate-400 text-[10px] uppercase tracking-widest">
+                        <thead class="sticky top-0 bg-white z-10 shadow-sm text-slate-400 text-[10px] uppercase tracking-widest">
                             <tr>
-                                <th class="px-6 py-3 border-b">Data/Hora</th>
-                                <th class="px-6 py-3 border-b">Descrição</th>
-                                <th class="px-6 py-3 border-b">Local</th>
-                                <th class="px-6 py-3 border-b">Pagamento</th>
-                                <th class="px-6 py-3 border-b text-right">Valor</th>
-                                <th class="px-6 py-3 border-b text-center">Ações</th>
+                                <th class="px-6 py-4 border-b">Data/Hora</th>
+                                <th class="px-6 py-4 border-b">Descrição</th>
+                                <th class="px-6 py-4 border-b">Local</th>
+                                <th class="px-6 py-4 border-b">Pagamento</th>
+                                <th class="px-6 py-4 border-b text-right">Valor</th>
+                                <th class="px-6 py-4 border-b text-center">Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="tabela" class="text-sm divide-y divide-slate-50">
-                            </tbody>
+                        <tbody id="tabela" class="text-sm divide-y divide-slate-50"></tbody>
                     </table>
                 </div>
             </section>
 
-            <section class="bg-slate-800 p-4 rounded-2xl shadow-xl text-white">
+            <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
                 <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-7 gap-3 items-end">
-                    <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Data/Hora</label><div class="flex gap-1"><input id="data" type="date" class="w-full bg-slate-700 border-none rounded-lg p-2 text-xs text-white focus:ring-2 focus:ring-indigo-500 outline-none"><input id="hora" type="time" class="w-full bg-slate-700 border-none rounded-lg p-2 text-xs text-white focus:ring-2 focus:ring-indigo-500 outline-none"></div></div>
-                    <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Descrição</label><input id="desc" class="w-full bg-slate-700 border-none rounded-lg p-2 text-xs text-white focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ex: Mercado"></div>
-                    <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Local</label><input id="local" class="w-full bg-slate-700 border-none rounded-lg p-2 text-xs text-white focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Onde?"></div>
-                    <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Valor</label><input id="valor" type="number" class="w-full bg-slate-700 border-none rounded-lg p-2 text-xs text-white focus:ring-2 focus:ring-indigo-500 outline-none font-bold" placeholder="0.00"></div>
-                    <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Pagamento</label><select id="pagamento" class="w-full bg-slate-700 border-none rounded-lg p-2 text-xs text-white focus:ring-2 focus:ring-indigo-500 outline-none"><option>Pix</option><option>Débito</option><option>Crédito Alice</option><option>Crédito Lucas</option></select></div>
-                    <button onclick="add()" class="md:col-span-2 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 rounded-xl transition-all shadow-lg shadow-indigo-500/20 uppercase text-xs">Adicionar Lançamento</button>
+                    <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Data/Hora</label><div class="flex gap-1"><input id="data" type="date" class="w-full border border-slate-200 rounded-lg p-2 text-xs outline-none focus:border-indigo-500"><input id="hora" type="time" class="w-full border border-slate-200 rounded-lg p-2 text-xs outline-none focus:border-indigo-500"></div></div>
+                    <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Descrição</label><input id="desc" class="w-full border border-slate-200 rounded-lg p-2 text-xs outline-none focus:border-indigo-500" placeholder="Ex: Mercado"></div>
+                    <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Local</label><input id="local" class="w-full border border-slate-200 rounded-lg p-2 text-xs outline-none focus:border-indigo-500" placeholder="Onde?"></div>
+                    <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Valor</label><input id="valor" type="number" class="w-full border border-slate-200 rounded-lg p-2 text-xs outline-none focus:border-indigo-500 font-bold" placeholder="0.00"></div>
+                    <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Pagamento</label><select id="pagamento" class="w-full border border-slate-200 rounded-lg p-2 text-xs outline-none focus:border-indigo-500"><option>Pix</option><option>Débito</option><option>Crédito Alice</option><option>Crédito Lucas</option></select></div>
+                    <button onclick="add()" class="md:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl transition-all shadow-md uppercase text-xs">Adicionar Lançamento</button>
                 </div>
             </section>
         </div>
 
         <div id="abaFixas" class="hidden">
             <div class="max-w-4xl mx-auto space-y-4">
-                <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <h2 class="text-lg font-extrabold mb-4">📌 Cadastro de Custos Fixos</h2>
+                <section class="bg-white p-6 rounded-2xl border border-slate-200">
+                    <h2 class="text-sm font-bold uppercase text-slate-400 mb-4 tracking-widest">📌 Gestão de Custos Fixos</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <input id="fixaDesc" placeholder="Descrição" class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:border-indigo-500">
-                        <input id="fixaValor" type="number" placeholder="Valor R$" class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:border-indigo-500">
-                        <input id="fixaData" type="date" class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:border-indigo-500">
-                        <input id="fixaLocal" placeholder="Local/Categoria" class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm outline-none focus:border-indigo-500">
+                        <input id="fixaDesc" placeholder="Descrição" class="border border-slate-200 rounded-lg p-2 text-sm outline-none focus:border-indigo-500">
+                        <input id="fixaValor" type="number" placeholder="Valor R$" class="border border-slate-200 rounded-lg p-2 text-sm outline-none focus:border-indigo-500">
+                        <input id="fixaData" type="date" class="border border-slate-200 rounded-lg p-2 text-sm outline-none focus:border-indigo-500">
+                        <input id="fixaLocal" placeholder="Categoria" class="border border-slate-200 rounded-lg p-2 text-sm outline-none focus:border-indigo-500">
                         <button onclick="addFixa()" class="lg:col-span-4 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-black transition-all">Salvar Custo Fixo</button>
                     </div>
                 </section>
                 <div class="bg-white rounded-2xl border border-slate-100 p-4">
-                    <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Lista de Recorrência</h3>
                     <ul id="listaFixas" class="space-y-2"></ul>
                 </div>
             </div>
