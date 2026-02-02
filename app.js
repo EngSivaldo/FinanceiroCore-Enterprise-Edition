@@ -1,4 +1,4 @@
-// --- MOTOR FINANCEIRO CORE v7.0 ---
+// --- MOTOR FINANCEIRO CORE v7.4 ---
 let periodoAtual = obterPeriodoAtual();
 let bancoDeDados = JSON.parse(localStorage.getItem("financeiro_db")) || {};
 let despesasFixas = JSON.parse(localStorage.getItem("fixas")) || [];
@@ -13,8 +13,8 @@ function obterPeriodoAtual() {
 
 window.onload = () => {
   inicializarAbasPeriodo();
-  if (document.getElementById("limiteInput"))
-    document.getElementById("limiteInput").value = limite;
+  const limInput = document.getElementById("limiteInput");
+  if (limInput) limInput.value = limite;
   renderizarTudo();
 };
 
@@ -37,6 +37,7 @@ function inicializarAbasPeriodo() {
     "Dez",
   ];
   const hoje = new Date();
+
   for (let i = -3; i <= 0; i++) {
     let d = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
     let p = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -63,165 +64,157 @@ function inicializarAbasPeriodo() {
 
 function renderizarTudo() {
   const tabela = document.getElementById("tabela");
-  const listaF = document.getElementById("listaFixas");
+  const tabelaF = document.getElementById("tabelaFixas");
+
   if (tabela) tabela.innerHTML = "";
-  if (listaF) listaF.innerHTML = "";
+  if (tabelaF) tabelaF.innerHTML = "";
 
   let totalMes = 0;
   let porPagamento = {};
   let porLocal = {};
 
+  // 1. Processar Variáveis
   let despesasMes = bancoDeDados[periodoAtual] || [];
   despesasMes.forEach((d, index) => {
     totalMes += d.valor;
     porPagamento[d.pagamento] = (porPagamento[d.pagamento] || 0) + d.valor;
     porLocal[d.local || "Outros"] =
       (porLocal[d.local || "Outros"] || 0) + d.valor;
-    if (tabela)
+    if (tabela) {
       tabela.innerHTML +=
         indexEditando === index
           ? renderRowEdicao(d, index)
           : renderRowNormal(d, index);
+    }
   });
 
+  // 2. Processar Fixas
   despesasFixas.forEach((f, index) => {
     totalMes += f.valor;
     porLocal[f.local || "Fixas"] =
       (porLocal[f.local || "Fixas"] || 0) + f.valor;
-    if (listaF)
-      listaF.innerHTML +=
+    if (tabelaF) {
+      tabelaF.innerHTML +=
         indexEditandoFixa === index
           ? renderFixaEdicao(f, index)
           : renderFixaNormal(f, index);
+    }
   });
 
   atualizarResumos(totalMes, porPagamento, porLocal);
 }
 
+// --- RENDERS VARIÁVEIS (COLUNA DE AÇÕES PROTEGIDA) ---
 function renderRowNormal(d, index) {
-  return `<tr class="group hover:bg-slate-50 transition-all">
-        <td class="px-6 py-4 text-[10px] font-black text-slate-400">${
-          d.data
-        }</td>
-        <td class="px-6 py-4 font-bold text-slate-700 uppercase text-xs">${
-          d.desc
-        }</td>
-        <td class="px-6 py-4"><span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase ${getBadgeClass(
+  return `<tr class="group hover:bg-slate-500/5 transition-all">
+        <td class="text-[10px] font-black text-slate-400">${d.data}</td>
+        <td class="font-bold uppercase text-xs">${d.desc}</td>
+        <td class="text-center"><span class="badge ${getBadgeClass(
           d.pagamento
         )}">${d.pagamento}</span></td>
-        <td class="px-6 py-4 text-right font-black italic text-slate-900">R$ ${d.valor.toFixed(
-          2
-        )}</td>
-        <td class="px-6 py-4 text-center">
-            <div class="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all">
-                <button onclick="setEditMode(${index})" class="text-indigo-400">✏️</button>
-                <button onclick="confirmarRemocao(${index})" class="text-red-300 hover:text-red-500">✕</button>
+        <td class="text-right font-black italic">R$ ${d.valor.toFixed(2)}</td>
+        <td class="text-center">
+            <div class="flex justify-center gap-3">
+                <button onclick="setEditMode(${index})" class="text-indigo-500 hover:scale-125 transition-transform" title="Editar">✏️</button>
+                <button onclick="confirmarRemocao(${index})" class="text-red-400 hover:text-red-500 hover:scale-125 transition-transform" title="Excluir">✕</button>
             </div>
         </td>
     </tr>`;
 }
 
 function renderRowEdicao(d, index) {
-  return `<tr class="bg-indigo-50/50">
+  return `<tr class="bg-indigo-500/10">
         <td colspan="5" class="p-4">
-            <div class="flex gap-2 bg-white p-2 rounded-2xl shadow-sm border border-indigo-100">
-                <input id="edit-desc" type="text" value="${d.desc}" class="flex-1 p-2 text-xs font-bold rounded-lg bg-slate-50">
-                <input id="edit-valor" type="number" value="${d.valor}" class="w-24 p-2 text-xs font-black rounded-lg bg-slate-50">
-                <button onclick="salvarEdicao(${index})" class="bg-emerald-500 text-white px-4 rounded-xl text-[10px] font-black">SALVAR</button>
-                <button onclick="setEditMode(null)" class="text-slate-400 px-2">X</button>
+            <div class="flex gap-2">
+                <input id="edit-desc" type="text" value="${d.desc}" class="flex-1 p-2 rounded-lg text-xs">
+                <input id="edit-valor" type="number" value="${d.valor}" class="w-24 p-2 rounded-lg text-xs">
+                <button onclick="salvarEdicao(${index})" class="bg-indigo-500 text-white px-4 py-2 rounded-lg text-[10px] font-bold">SALVAR</button>
+                <button onclick="setEditMode(null)" class="text-slate-400 px-2">✕</button>
             </div>
         </td>
     </tr>`;
 }
 
+// --- RENDERS FIXAS ---
 function renderFixaNormal(f, index) {
-  return `<div class="flex justify-between items-center p-6 glass-card border-l-4 border-l-indigo-500 group transition-all hover:translate-x-1">
-        <div class="flex items-center gap-4">
-            <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500">📌</div>
-            <div>
-                <span class="font-black text-slate-800 uppercase text-xs">${
-                  f.desc
-                }</span>
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">${
-                  f.local || "Geral"
-                }</p>
+  return `<tr class="group hover:bg-indigo-500/5 transition-all">
+        <td class="font-bold uppercase text-xs text-slate-700 dark:text-slate-300">${
+          f.desc
+        }</td>
+        <td><span class="text-[10px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-500/10 px-2 py-1 rounded">${
+          f.local || "Fixa"
+        }</span></td>
+        <td class="text-right font-black italic text-lg text-slate-900 dark:text-white">R$ ${f.valor.toFixed(
+          2
+        )}</td>
+        <td class="text-center">
+            <div class="flex justify-center gap-4">
+                <button onclick="setEditModeFixa(${index})" class="text-indigo-500 hover:scale-125 transition-transform" title="Editar">✏️</button>
+                <button onclick="removerFixa(${index})" class="text-red-400 hover:text-red-500 hover:scale-125 transition-transform" title="Excluir">✕</button>
             </div>
-        </div>
-        <div class="flex items-center gap-6">
-            <span class="font-black text-slate-900 italic text-lg">R$ ${f.valor.toFixed(
-              2
-            )}</span>
-            <div class="flex gap-3 opacity-0 group-hover:opacity-100 transition-all">
-                <button onclick="setEditModeFixa(${index})" class="text-indigo-400">✏️</button>
-                <button onclick="removerFixa(${index})" class="text-red-300 hover:text-red-500">✕</button>
-            </div>
-        </div>
-    </div>`;
+        </td>
+    </tr>`;
 }
 
 function renderFixaEdicao(f, index) {
-  return `<div class="p-6 glass-card border-l-4 border-l-emerald-500 bg-emerald-50/10">
-        <div class="flex gap-4">
-            <input id="edit-fixa-desc" type="text" value="${f.desc}" class="flex-1 p-3 rounded-xl text-xs font-bold">
-            <input id="edit-fixa-valor" type="number" value="${f.valor}" class="w-32 p-3 rounded-xl text-xs font-black">
-            <button onclick="salvarEdicaoFixa(${index})" class="bg-emerald-500 text-white px-6 rounded-xl text-[10px] font-black uppercase">OK</button>
-            <button onclick="setEditModeFixa(null)" class="text-slate-400">CANCELAR</button>
-        </div>
-    </div>`;
+  return `<tr class="bg-emerald-500/10">
+        <td colspan="4" class="p-4">
+            <div class="flex gap-3 items-center">
+                <input id="edit-fixa-desc" type="text" value="${f.desc}" class="flex-1 p-3 rounded-xl text-xs font-bold bg-white/10">
+                <input id="edit-fixa-valor" type="number" value="${f.valor}" class="w-32 p-3 rounded-xl text-xs font-black bg-white/10">
+                <button onclick="salvarEdicaoFixa(${index})" class="bg-emerald-500 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase">Confirmar</button>
+                <button onclick="setEditModeFixa(null)" class="text-slate-400 px-2 font-bold">✕</button>
+            </div>
+        </td>
+    </tr>`;
 }
 
-function mostrarAba(aba) {
-  document
-    .getElementById("abaVariaveis")
-    .classList.toggle("hidden", aba !== "variaveis");
-  document
-    .getElementById("abaFixas")
-    .classList.toggle("hidden", aba !== "fixas");
-  document.getElementById("tituloPagina").innerText =
-    aba === "variaveis" ? "Dashboard de Variáveis" : "Custos Recorrentes";
-  document.getElementById(
-    "btn-variaveis"
-  ).className = `sidebar-item w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${
-    aba === "variaveis" ? "sidebar-active" : "text-slate-500"
-  }`;
-  document.getElementById(
-    "btn-fixas"
-  ).className = `sidebar-item w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${
-    aba === "fixas" ? "sidebar-active" : "text-slate-500"
-  }`;
-}
-
+// --- FUNÇÕES DE AÇÃO E LIMPEZA ---
 function add() {
-  const valor = parseFloat(document.getElementById("valor").value);
-  const desc = document.getElementById("desc").value;
-  if (!valor || !desc) return alert("Preencha campos!");
+  const valorInput = document.getElementById("valor");
+  const descInput = document.getElementById("desc");
+  const localInput = document.getElementById("local");
+  const valor = parseFloat(valorInput.value);
+  const desc = descInput.value;
+
+  if (!valor || !desc) return alert("Sênior, preencha Descrição e Valor!");
+
   const d = {
-    data: document.getElementById("data").value,
+    data:
+      document.getElementById("data").value ||
+      new Date().toISOString().split("T")[0],
     desc,
-    local: document.getElementById("local").value,
+    local: localInput.value || "Geral",
     valor,
     pagamento: document.getElementById("pagamento").value,
-    hora: document.getElementById("hora").value,
+    hora: document.getElementById("hora").value || "00:00",
   };
+
   if (!bancoDeDados[periodoAtual]) bancoDeDados[periodoAtual] = [];
   bancoDeDados[periodoAtual].push(d);
   localStorage.setItem("financeiro_db", JSON.stringify(bancoDeDados));
+
+  // Limpeza de campos
+  [valorInput, descInput, localInput].forEach((i) => (i.value = ""));
   renderizarTudo();
 }
 
 function addFixa() {
-  const desc = document.getElementById("fixaDesc").value;
-  const valor = parseFloat(document.getElementById("fixaValor").value);
-  if (!desc || isNaN(valor)) return alert("Preencha os campos!");
-  despesasFixas.push({
-    desc,
-    valor,
-    local: document.getElementById("fixaLocal").value,
-  });
+  const dI = document.getElementById("fixaDesc");
+  const vI = document.getElementById("fixaValor");
+  const lI = document.getElementById("fixaLocal");
+  const desc = dI.value;
+  const valor = parseFloat(vI.value);
+
+  if (!desc || isNaN(valor)) return alert("Sênior, dados incompletos!");
+
+  despesasFixas.push({ desc, valor, local: lI.value || "Fixa" });
   localStorage.setItem("fixas", JSON.stringify(despesasFixas));
+  [dI, vI, lI].forEach((i) => (i.value = ""));
   renderizarTudo();
 }
 
+// --- EDIÇÃO E REMOÇÃO ---
 function setEditMode(idx) {
   indexEditando = idx;
   renderizarTudo();
@@ -250,33 +243,48 @@ function salvarEdicaoFixa(idx) {
 }
 
 function removerFixa(idx) {
-  despesasFixas.splice(idx, 1);
-  localStorage.setItem("fixas", JSON.stringify(despesasFixas));
-  renderizarTudo();
-}
-function definirLimite() {
-  limite = parseFloat(document.getElementById("limiteInput").value) || 0;
-  localStorage.setItem("limite", limite);
-  renderizarTudo();
-}
-function fecharModal() {
-  document.getElementById("modalOverlay").style.display = "none";
-}
-function confirmarRemocao(idx) {
-  document.getElementById("modalOverlay").style.display = "flex";
-  document.getElementById("btnConfirmarDeletar").onclick = () => {
-    bancoDeDados[periodoAtual].splice(idx, 1);
-    localStorage.setItem("financeiro_db", JSON.stringify(bancoDeDados));
+  if (confirm("Excluir custo fixo?")) {
+    despesasFixas.splice(idx, 1);
+    localStorage.setItem("fixas", JSON.stringify(despesasFixas));
     renderizarTudo();
-    fecharModal();
-  };
+  }
 }
 
-function getBadgeClass(pag) {
-  if (pag === "Pix") return "badge-pix";
-  if (pag.includes("Alice")) return "badge-alice";
-  if (pag.includes("Lucas")) return "badge-lucas";
-  return "badge-debito";
+function confirmarRemocao(idx) {
+  const modal = document.getElementById("modalOverlay");
+  if (modal) {
+    modal.style.display = "flex";
+    document.getElementById("btnConfirmarDeletar").onclick = () => {
+      bancoDeDados[periodoAtual].splice(idx, 1);
+      localStorage.setItem("financeiro_db", JSON.stringify(bancoDeDados));
+      renderizarTudo();
+      modal.style.display = "none";
+    };
+  } else {
+    if (confirm("Excluir lançamento?")) {
+      bancoDeDados[periodoAtual].splice(idx, 1);
+      localStorage.setItem("financeiro_db", JSON.stringify(bancoDeDados));
+      renderizarTudo();
+    }
+  }
+}
+
+// --- RESUMOS E UI ---
+function mostrarAba(aba) {
+  document
+    .getElementById("abaVariaveis")
+    .classList.toggle("hidden", aba !== "variaveis");
+  document
+    .getElementById("abaFixas")
+    .classList.toggle("hidden", aba === "variaveis");
+  document
+    .getElementById("btn-variaveis")
+    .classList.toggle("sidebar-active", aba === "variaveis");
+  document
+    .getElementById("btn-fixas")
+    .classList.toggle("sidebar-active", aba !== "variaveis");
+  document.getElementById("tituloPagina").innerText =
+    aba === "variaveis" ? "Dashboard de Variáveis" : "Custos Recorrentes";
 }
 
 function atualizarResumos(total, pag, loc) {
@@ -292,6 +300,11 @@ function atualizarResumos(total, pag, loc) {
   document.getElementById("progressFill").style.width =
     Math.min(percent, 100) + "%";
 
+  // Alerta visual de limite
+  document
+    .getElementById("progressFill")
+    .classList.toggle("bg-red-500", percent >= 90);
+
   renderizarListaLateral("totaisPag", pag, "border-l-indigo-500");
   renderizarListaLateral("totaisLocal", loc, "border-l-amber-400");
 }
@@ -303,13 +316,20 @@ function renderizarListaLateral(id, obj, border) {
     .sort((a, b) => b[1] - a[1])
     .map(
       ([key, val]) => `
-        <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border-l-4 ${border}">
-            <span class="text-[9px] font-black text-slate-400 uppercase truncate mr-2">${key}</span>
-            <span class="text-xs font-black text-slate-800 italic">R$ ${val.toFixed(
+        <div class="flex justify-between items-center p-4 dark:bg-white/5 bg-slate-100 rounded-2xl border-l-4 ${border}">
+            <span class="text-[9px] font-black opacity-60 uppercase truncate mr-2">${key}</span>
+            <span class="text-xs font-black italic text-indigo-500">R$ ${val.toFixed(
               2
             )}</span>
-        </div>
-    `
+        </div>`
     )
     .join("");
+}
+
+function getBadgeClass(pag) {
+  const p = pag.toLowerCase();
+  if (p.includes("pix")) return "badge-pix";
+  if (p.includes("alice")) return "badge-credito-alice";
+  if (p.includes("lucas")) return "badge-credito-lucas";
+  return "badge-debito";
 }
