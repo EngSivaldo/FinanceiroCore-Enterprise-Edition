@@ -1,181 +1,164 @@
 <!DOCTYPE html>
-<html lang="pt-br" class="dark">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinanceiroCore | Cinematic Enterprise</title>
+    <title>Financeiro Pro | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <script>
-        tailwind.config = { darkMode: 'class' }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        .glass-card { background: white; border: 1px solid #e2e8f0; shadow-sm; }
+        .custom-input { 
+            @apply bg-white border border-slate-200 rounded-xl px-4 py-2.5 outline-none transition-all duration-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 w-full text-slate-700;
+        }
+        .tab-btn { @apply px-8 py-3 rounded-xl font-bold transition-all duration-300 flex items-center gap-2; }
+        .tab-active { @apply bg-white text-indigo-600 shadow-md translate-y-[-2px]; }
+        .tab-inactive { @apply text-indigo-200 hover:text-white hover:bg-white/10; }
+        
+        /* Estilo da Tabela */
+        table { border-spacing: 0 8px; border-collapse: separate; }
+        tr.row-spacer { height: 8px; }
+    </style>
 </head>
-<body class="flex min-h-screen transition-colors duration-500 bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-100">
+<body class="text-slate-900">
 
-    <aside class="w-72 bg-white/80 dark:bg-black/20 backdrop-blur-xl border-r border-slate-200 dark:border-white/5 flex flex-col p-6 z-50">
-        <div class="flex items-center justify-between mb-10 px-2">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                    <span class="text-white font-black text-xl">F</span>
-                </div>
+    <header class="bg-indigo-700 text-white pt-10 pb-24 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
-                    <h1 class="text-sm font-black dark:text-white uppercase tracking-tighter">FinanceiroCore</h1>
-                    <p class="text-[9px] text-indigo-500 font-bold uppercase tracking-widest">Enterprise v6.3</p>
+                    <h1 class="text-3xl font-extrabold flex items-center gap-3">
+                        <span class="bg-white/20 p-2 rounded-2xl">💰</span>
+                        Controle Financeiro
+                    </h1>
+                    <p class="text-indigo-100 mt-2 opacity-80">Gestão profissional de despesas e limites</p>
                 </div>
-            </div>
-            <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-200 dark:bg-white/10 hover:scale-110 transition-all">
-                <span id="theme-icon">🌙</span>
-            </button>
-        </div>
-
-        <nav class="flex-1 space-y-3">
-            <button onclick="mostrarAba('variaveis')" id="btn-variaveis" class="sidebar-item sidebar-active w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-xs font-bold transition-all">
-                <span class="text-lg">📊</span> Despesas Variáveis
-            </button>
-            <button onclick="mostrarAba('fixas')" id="btn-fixas" class="sidebar-item w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-xs font-bold text-slate-500 transition-all">
-                <span class="text-lg">📌</span> Custos Recorrentes
-            </button>
-        </nav>
-
-        <div class="mt-auto p-5 glass-card rounded-[2rem] border border-indigo-500/10">
-            <p class="text-[10px] font-black uppercase mb-2 opacity-60 tracking-widest text-indigo-500">Limite Global</p>
-            <input type="number" id="limiteInput" onchange="definirLimite()" class="w-full bg-transparent text-2xl font-black focus:outline-none" placeholder="0,00">
-            <div class="w-full bg-slate-200 dark:bg-white/10 h-1.5 rounded-full mt-4 overflow-hidden">
-                <div id="progressFill" class="bg-indigo-500 h-full shadow-[0_0_15px_rgba(99,102,241,0.5)] transition-all duration-1000" style="width: 0%"></div>
-            </div>
-            <p id="saldoLimite" class="text-[10px] font-bold mt-3 opacity-70 italic text-right">Disponível: R$ 0,00</p>
-        </div>
-    </aside>
-
-    <main class="flex-1 flex flex-col h-screen overflow-y-auto">
-        <header class="p-10 flex justify-between items-center sticky top-0 bg-slate-50/80 dark:bg-[#020617]/80 backdrop-blur-xl z-40 border-b border-slate-200 dark:border-white/5">
-            <div>
-                <h2 id="tituloPagina" class="text-3xl font-black tracking-tight">Dashboard do Sistema</h2>
-                <div id="monthSelector" class="flex gap-2 mt-4"></div>
-            </div>
-            <div class="text-right glass-card p-5 rounded-[2rem] min-w-[180px] border-r-4 border-indigo-500">
-                <p class="text-[9px] font-black opacity-50 uppercase tracking-[0.2em]">Gasto Total</p>
-                <h3 id="total" class="text-3xl font-black text-indigo-500 italic leading-none mt-1">R$ 0,00</h3>
-            </div>
-        </header>
-
-        <div class="px-10 pb-12 grid grid-cols-12 gap-8 mt-4">
-            <div class="col-span-12 lg:col-span-8 space-y-8">
                 
-                <section id="abaVariaveis" class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div class="glass-card rounded-[2.5rem] p-8 shadow-2xl">
-                        <h4 class="text-[10px] font-black uppercase opacity-40 mb-6 tracking-[.3em]">Iniciar Transação</h4>
-                        <div id="formAdd" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <input id="data" type="date" class="p-4 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-white/5 border-none focus:ring-2 ring-indigo-500">
-                            <input id="desc" type="text" placeholder="Descrição" class="p-4 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-white/5 border-none focus:ring-2 ring-indigo-500">
-                            <input id="local" type="text" placeholder="Local/Categoria" class="p-4 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-white/5 border-none focus:ring-2 ring-indigo-500">
-                            <input id="valor" type="number" placeholder="Valor 0,00" class="p-4 rounded-2xl text-xs font-black bg-slate-100 dark:bg-white/5 border-none focus:ring-2 ring-indigo-500">
-                            <select id="pagamento" class="p-4 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-white/5 border-none">
-                                <option>Pix</option><option>Débito</option>
-                                <option>Crédito Alice</option><option>Crédito Lucas</option>
-                            </select>
-                            <input id="hora" type="time" class="p-4 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-white/5 border-none">
-                            <button onclick="add()" class="md:col-span-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02]">Executar Lançamento</button>
-                        </div>
-                    </div>
-
-                    <div class="glass-card rounded-[2.5rem] overflow-hidden border border-white/5">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-200/50 dark:bg-white/5">
-                                    <tr>
-                                        <th class="px-8 py-5 text-[10px] font-black uppercase opacity-40">Data/Hora</th>
-                                        <th class="px-8 py-5 text-[10px] font-black uppercase opacity-40">Descrição</th>
-                                        <th class="px-8 py-5 text-[10px] font-black uppercase opacity-40 text-center">Tipo</th>
-                                        <th class="px-8 py-5 text-[10px] font-black uppercase opacity-40 text-right">Valor</th>
-                                        <th class="px-8 py-5 text-[10px] font-black uppercase opacity-40 text-center">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tabela" class="divide-y divide-slate-200 dark:divide-white/5"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-                <section id="abaFixas" class="hidden space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div class="glass-card rounded-[2.5rem] p-8 border-t-4 border-indigo-500 shadow-2xl">
-                        <h4 class="text-[10px] font-black uppercase opacity-40 mb-6 tracking-[.3em]">Registro Recorrente</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <input id="fixaDesc" type="text" placeholder="Nome do Serviço Fixo" class="p-4 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-white/5 border-none focus:ring-2 ring-indigo-500">
-                            <input id="fixaLocal" type="text" placeholder="Categoria/Local" class="p-4 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-white/5 border-none focus:ring-2 ring-indigo-500">
-                            <input id="fixaValor" type="number" placeholder="Valor Mensal" class="p-4 rounded-2xl text-xs font-black bg-slate-100 dark:bg-white/5 border-none focus:ring-2 ring-indigo-500">
-                            <button onclick="addFixa()" class="md:col-span-3 bg-white dark:bg-white/10 text-black dark:text-white p-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">Adicionar ao Fluxo Permanente</button>
-                        </div>
-                    </div>
-
-                    <div class="glass-card rounded-[2.5rem] overflow-hidden border border-white/5">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-200/50 dark:bg-white/5">
-                                    <tr>
-                                        <th class="px-8 py-5 text-[10px] font-black uppercase opacity-40">Descrição</th>
-                                        <th class="px-8 py-5 text-[10px] font-black uppercase opacity-40">Local/Tag</th>
-                                        <th class="px-8 py-5 text-[10px] font-black uppercase opacity-40 text-right">Valor Mensal</th>
-                                        <th class="px-8 py-5 text-[10px] font-black uppercase opacity-40 text-center">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tabelaFixas" class="divide-y divide-slate-200 dark:divide-white/5"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
+                <nav class="flex bg-indigo-800/50 p-1.5 rounded-2xl backdrop-blur-md">
+                    <button onclick="mostrarAba('variaveis')" id="btn-variaveis" class="tab-btn tab-active">
+                        <span>📊</span> Variáveis
+                    </button>
+                    <button onclick="mostrarAba('fixas')" id="btn-fixas" class="tab-btn tab-inactive">
+                        <span>📌</span> Fixas
+                    </button>
+                </nav>
             </div>
+        </div>
+    </header>
 
-            <div class="col-span-12 lg:col-span-4 space-y-8">
-                <div class="glass-card rounded-[2.5rem] p-8 border-t-2 border-indigo-500/30">
-                    <h5 class="text-[9px] font-black uppercase mb-6 opacity-40 tracking-[.2em] flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span> Análise de Pagamentos
-                    </h5>
-                    <div id="totaisPag" class="space-y-4"></div>
+    <main class="max-w-7xl mx-auto px-6 -mt-16 mb-12">
+        
+        <div id="abaVariaveis" class="space-y-6">
+            
+            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="glass-card p-6 rounded-2xl shadow-sm border-t-4 border-purple-500">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Limite de Compra</p>
+                    <div class="flex gap-2 mt-4">
+                        <input id="limiteInput" type="number" placeholder="Definir R$" class="w-full text-xl font-bold outline-none border-b-2 border-slate-100 focus:border-purple-400 bg-transparent">
+                        <button onclick="definirLimite()" class="bg-purple-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-purple-700 transition-colors">SALVAR</button>
+                    </div>
+                    <p class="mt-4 text-sm font-medium text-slate-500">Saldo Restante: <span id="saldoLimite" class="font-bold text-purple-600">R$ 0,00</span></p>
                 </div>
 
-                <div class="glass-card rounded-[2.5rem] p-8 border-t-2 border-amber-500/30">
-                    <h5 class="text-[9px] font-black uppercase mb-6 opacity-40 tracking-[.2em] flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Distribuição por Setor
-                    </h5>
-                    <div id="totaisLocal" class="space-y-4"></div>
+                <div class="glass-card p-6 rounded-2xl shadow-sm border-t-4 border-emerald-500">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Geral</p>
+                    <h2 id="total" class="text-3xl font-black text-slate-800 mt-4 italic">R$ 0,00</h2>
+                    <p class="text-[10px] text-emerald-500 font-bold mt-2">↑ Sincronizado</p>
+                </div>
+
+                <div class="glass-card p-6 rounded-2xl shadow-sm border-t-4 border-blue-500">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">💳 Por Pagamento</p>
+                    <div id="totaisPag" class="text-sm space-y-2 max-h-[100px] overflow-y-auto pr-2 font-medium"></div>
+                </div>
+
+                <div class="glass-card p-6 rounded-2xl shadow-sm border-t-4 border-amber-500">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">🏪 Por Local</p>
+                    <div id="totaisLocal" class="text-sm space-y-2 max-h-[100px] overflow-y-auto pr-2 font-medium text-slate-600"></div>
+                </div>
+            </section>
+
+            <section class="glass-card p-8 rounded-3xl shadow-lg">
+                <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <span class="w-8 h-8 bg-indigo-100 text-indigo-600 flex items-center justify-center rounded-lg text-sm">＋</span>
+                    Nova Despesa Variável
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 items-end">
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Data</label><input id="data" type="date" class="custom-input"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Hora</label><input id="hora" type="time" class="custom-input"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Descrição</label><input id="desc" placeholder="O que comprou?" class="custom-input"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Local</label><input id="local" placeholder="Onde?" class="custom-input"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Valor</label><input id="valor" type="number" placeholder="R$" class="custom-input font-bold text-emerald-600"></div>
+                    <div class="space-y-1"><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">Pagamento</label>
+                        <select id="pagamento" class="custom-input">
+                            <option>Pix</option>
+                            <option>Débito</option>
+                            <option>Crédito Alice</option>
+                            <option>Crédito Lucas</option>
+                        </select>
+                    </div>
+                    <button onclick="add()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-[48px] rounded-xl transition-all shadow-lg shadow-indigo-100">Adicionar</button>
+                </div>
+                <div class="mt-6 pt-4 border-t border-slate-50 flex justify-end">
+                    <button onclick="exportarExcel()" class="text-xs font-bold text-slate-400 hover:text-indigo-600 flex items-center gap-2 transition-colors">
+                        📥 EXPORTAR PLANILHA EXCEL
+                    </button>
+                </div>
+            </section>
+
+            <section class="overflow-x-auto pb-4">
+                <table class="w-full text-left">
+                    <thead class="text-slate-400 text-[11px] uppercase tracking-widest px-4">
+                        <tr>
+                            <th class="px-6 py-2">Data/Hora</th>
+                            <th class="px-6 py-2">Descrição</th>
+                            <th class="px-6 py-2">Local</th>
+                            <th class="px-6 py-2">Valor</th>
+                            <th class="px-6 py-2">Pagamento</th>
+                            <th class="px-6 py-2 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela" class="text-sm"></tbody>
+                </table>
+            </section>
+        </div>
+
+        <div id="abaFixas" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div class="max-w-4xl mx-auto space-y-8">
+                <section class="glass-card p-10 rounded-[2rem] shadow-xl border-b-8 border-indigo-600">
+                    <h2 class="text-2xl font-black text-slate-800 mb-8">📌 Gestão de Despesas Fixas</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase ml-1">Descrição do Custo</label>
+                            <input id="fixaDesc" placeholder="Ex: Aluguel, Internet..." class="custom-input text-lg font-medium">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase ml-1">Valor Mensal (R$)</label>
+                            <input id="fixaValor" type="number" placeholder="0.00" class="custom-input text-lg font-bold text-emerald-600">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase ml-1">Data de Vencimento</label>
+                            <input id="fixaData" type="date" class="custom-input">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase ml-1">Local/Categoria</label>
+                            <input id="fixaLocal" placeholder="Ex: Casa, Escritório" class="custom-input">
+                        </div>
+                        <button onclick="addFixa()" class="md:col-span-2 bg-slate-900 hover:bg-black text-white py-4 rounded-2xl font-bold text-lg transition-all shadow-xl shadow-slate-200">
+                            Cadastrar Despesa Fixa
+                        </button>
+                    </div>
+                </section>
+
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 border-b pb-4">Lista de Compromissos Recorrentes</h3>
+                    <ul id="listaFixas" class="space-y-4"></ul>
                 </div>
             </div>
         </div>
+
     </main>
 
-    <div id="modalOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-[100] items-center justify-center p-4">
-        <div class="glass-card rounded-[3rem] p-10 max-w-sm w-full text-center shadow-2xl border border-white/10">
-            <div class="w-20 h-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">⚠️</div>
-            <h3 class="text-xl font-black mb-2">Confirmar Exclusão?</h3>
-            <p class="text-slate-400 text-sm mb-8">Esta ação removerá permanentemente o registro do banco de dados local.</p>
-            <div class="flex gap-3">
-                <button onclick="fecharModal()" class="flex-1 py-4 rounded-2xl font-bold text-slate-400 hover:bg-white/5">Abortar</button>
-                <button id="btnConfirmarDeletar" class="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black shadow-lg shadow-red-600/20">Confirmar</button>
-            </div>
-        </div>
-    </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="app.js"></script>
-    <script>
-        function toggleDarkMode() {
-            const html = document.documentElement;
-            const icon = document.getElementById('theme-icon');
-            if (html.classList.contains('dark')) {
-                html.classList.remove('dark');
-                icon.innerText = '☀️';
-                localStorage.setItem('theme', 'light');
-            } else {
-                html.classList.add('dark');
-                icon.innerText = '🌙';
-                localStorage.setItem('theme', 'dark');
-            }
-        }
-        if (localStorage.getItem('theme') === 'light') {
-            document.documentElement.classList.remove('dark');
-            document.getElementById('theme-icon').innerText = '☀️';
-        }
-    </script>
 </body>
 </html>

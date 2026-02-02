@@ -1,335 +1,224 @@
-// --- MOTOR FINANCEIRO CORE v7.4 ---
-let periodoAtual = obterPeriodoAtual();
-let bancoDeDados = JSON.parse(localStorage.getItem("financeiro_db")) || {};
+/** * ARCHITECTURE: Event-Driven Dashboard
+ * Todas as funções de dados invocam 'recalcular()' para garantir sincronia da UI.
+ */
+
+let despesas = JSON.parse(localStorage.getItem("despesas")) || [];
 let despesasFixas = JSON.parse(localStorage.getItem("fixas")) || [];
 let limite = parseFloat(localStorage.getItem("limite")) || 0;
-let indexEditando = null;
-let indexEditandoFixa = null;
 
-function obterPeriodoAtual() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
+// Inicialização segura
 window.onload = () => {
-  inicializarAbasPeriodo();
-  const limInput = document.getElementById("limiteInput");
-  if (limInput) limInput.value = limite;
+  document.getElementById("limiteInput").value = limite || "";
   renderizarTudo();
 };
 
-function inicializarAbasPeriodo() {
-  const selector = document.getElementById("monthSelector");
-  if (!selector) return;
-  selector.innerHTML = "";
-  const meses = [
-    "Jan",
-    "Fev",
-    "Mar",
-    "Abr",
-    "Mai",
-    "Jun",
-    "Jul",
-    "Ago",
-    "Set",
-    "Out",
-    "Nov",
-    "Dez",
-  ];
-  const hoje = new Date();
+function renderizarTudo() {
+  // 1. Limpar e Popular Tabela Variáveis
+  const tabela = document.getElementById("tabela");
+  tabela.innerHTML = "";
+  despesas.forEach((d, index) => inserirLinhaNaTabela(d, index));
 
-  for (let i = -3; i <= 0; i++) {
-    let d = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
-    let p = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    let btn = document.createElement("button");
-    btn.innerText = `${meses[d.getMonth()]} ${d
-      .getFullYear()
-      .toString()
-      .slice(-2)}`;
-    btn.className = `px-4 py-1.5 rounded-xl text-[10px] font-black transition-all ${
-      p === periodoAtual
-        ? "bg-indigo-600 text-white shadow-md"
-        : "text-slate-400 hover:text-slate-600"
-    }`;
-    btn.onclick = () => {
-      periodoAtual = p;
-      indexEditando = null;
-      indexEditandoFixa = null;
-      inicializarAbasPeriodo();
-      renderizarTudo();
-    };
-    selector.appendChild(btn);
+  // 2. Limpar e Popular Lista de Fixas
+  const listaF = document.getElementById("listaFixas");
+  listaF.innerHTML = "";
+  despesasFixas.forEach((f, index) => {
+    listaF.innerHTML += `
+            <li class="flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-100 group">
+                <div class="flex items-center gap-3">
+                    <span class="bg-white p-2 rounded-lg shadow-sm">📌</span>
+                    <div>
+                        <p class="font-bold text-slate-700">${f.desc}</p>
+                        <p class="text-xs text-slate-400">${
+                          f.local || "Sem local"
+                        } • Vence dia: ${
+      f.data ? f.data.split("-").reverse()[0] : "--"
+    }</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="font-bold text-slate-900">R$ ${f.valor.toFixed(
+                      2
+                    )}</span>
+                    <button onclick="removerFixa(${index})" class="text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-600">remover</button>
+                </div>
+            </li>`;
+  });
+
+  recalcular();
+}
+
+function mostrarAba(aba) {
+  const v = document.getElementById("abaVariaveis");
+  const f = document.getElementById("abaFixas");
+  const tV = document.getElementById("tabVariaveis");
+  const tF = document.getElementById("tabFixas");
+
+  if (aba === "variaveis") {
+    v.classList.remove("hidden");
+    f.classList.add("hidden");
+    tV.className = "tab-btn tab-active";
+    tF.className = "tab-btn tab-inactive";
+  } else {
+    v.classList.add("hidden");
+    f.classList.remove("hidden");
+    tF.className = "tab-btn tab-active";
+    tV.className = "tab-btn tab-inactive";
   }
 }
 
-function renderizarTudo() {
-  const tabela = document.getElementById("tabela");
-  const tabelaF = document.getElementById("tabelaFixas");
-
-  if (tabela) tabela.innerHTML = "";
-  if (tabelaF) tabelaF.innerHTML = "";
-
-  let totalMes = 0;
-  let porPagamento = {};
-  let porLocal = {};
-
-  // 1. Processar Variáveis
-  let despesasMes = bancoDeDados[periodoAtual] || [];
-  despesasMes.forEach((d, index) => {
-    totalMes += d.valor;
-    porPagamento[d.pagamento] = (porPagamento[d.pagamento] || 0) + d.valor;
-    porLocal[d.local || "Outros"] =
-      (porLocal[d.local || "Outros"] || 0) + d.valor;
-    if (tabela) {
-      tabela.innerHTML +=
-        indexEditando === index
-          ? renderRowEdicao(d, index)
-          : renderRowNormal(d, index);
-    }
-  });
-
-  // 2. Processar Fixas
-  despesasFixas.forEach((f, index) => {
-    totalMes += f.valor;
-    porLocal[f.local || "Fixas"] =
-      (porLocal[f.local || "Fixas"] || 0) + f.valor;
-    if (tabelaF) {
-      tabelaF.innerHTML +=
-        indexEditandoFixa === index
-          ? renderFixaEdicao(f, index)
-          : renderFixaNormal(f, index);
-    }
-  });
-
-  atualizarResumos(totalMes, porPagamento, porLocal);
-}
-
-// --- RENDERS VARIÁVEIS (COLUNA DE AÇÕES PROTEGIDA) ---
-function renderRowNormal(d, index) {
-  return `<tr class="group hover:bg-slate-500/5 transition-all">
-        <td class="text-[10px] font-black text-slate-400">${d.data}</td>
-        <td class="font-bold uppercase text-xs">${d.desc}</td>
-        <td class="text-center"><span class="badge ${getBadgeClass(
-          d.pagamento
-        )}">${d.pagamento}</span></td>
-        <td class="text-right font-black italic">R$ ${d.valor.toFixed(2)}</td>
-        <td class="text-center">
-            <div class="flex justify-center gap-3">
-                <button onclick="setEditMode(${index})" class="text-indigo-500 hover:scale-125 transition-transform" title="Editar">✏️</button>
-                <button onclick="confirmarRemocao(${index})" class="text-red-400 hover:text-red-500 hover:scale-125 transition-transform" title="Excluir">✕</button>
-            </div>
-        </td>
-    </tr>`;
-}
-
-function renderRowEdicao(d, index) {
-  return `<tr class="bg-indigo-500/10">
-        <td colspan="5" class="p-4">
-            <div class="flex gap-2">
-                <input id="edit-desc" type="text" value="${d.desc}" class="flex-1 p-2 rounded-lg text-xs">
-                <input id="edit-valor" type="number" value="${d.valor}" class="w-24 p-2 rounded-lg text-xs">
-                <button onclick="salvarEdicao(${index})" class="bg-indigo-500 text-white px-4 py-2 rounded-lg text-[10px] font-bold">SALVAR</button>
-                <button onclick="setEditMode(null)" class="text-slate-400 px-2">✕</button>
-            </div>
-        </td>
-    </tr>`;
-}
-
-// --- RENDERS FIXAS ---
-function renderFixaNormal(f, index) {
-  return `<tr class="group hover:bg-indigo-500/5 transition-all">
-        <td class="font-bold uppercase text-xs text-slate-700 dark:text-slate-300">${
-          f.desc
-        }</td>
-        <td><span class="text-[10px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-500/10 px-2 py-1 rounded">${
-          f.local || "Fixa"
-        }</span></td>
-        <td class="text-right font-black italic text-lg text-slate-900 dark:text-white">R$ ${f.valor.toFixed(
-          2
-        )}</td>
-        <td class="text-center">
-            <div class="flex justify-center gap-4">
-                <button onclick="setEditModeFixa(${index})" class="text-indigo-500 hover:scale-125 transition-transform" title="Editar">✏️</button>
-                <button onclick="removerFixa(${index})" class="text-red-400 hover:text-red-500 hover:scale-125 transition-transform" title="Excluir">✕</button>
-            </div>
-        </td>
-    </tr>`;
-}
-
-function renderFixaEdicao(f, index) {
-  return `<tr class="bg-emerald-500/10">
-        <td colspan="4" class="p-4">
-            <div class="flex gap-3 items-center">
-                <input id="edit-fixa-desc" type="text" value="${f.desc}" class="flex-1 p-3 rounded-xl text-xs font-bold bg-white/10">
-                <input id="edit-fixa-valor" type="number" value="${f.valor}" class="w-32 p-3 rounded-xl text-xs font-black bg-white/10">
-                <button onclick="salvarEdicaoFixa(${index})" class="bg-emerald-500 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase">Confirmar</button>
-                <button onclick="setEditModeFixa(null)" class="text-slate-400 px-2 font-bold">✕</button>
-            </div>
-        </td>
-    </tr>`;
-}
-
-// --- FUNÇÕES DE AÇÃO E LIMPEZA ---
+// LOGICA DE ADIÇÃO (MELHORADA)
 function add() {
-  const valorInput = document.getElementById("valor");
-  const descInput = document.getElementById("desc");
-  const localInput = document.getElementById("local");
-  const valor = parseFloat(valorInput.value);
-  const desc = descInput.value;
-
-  if (!valor || !desc) return alert("Sênior, preencha Descrição e Valor!");
-
   const d = {
-    data:
-      document.getElementById("data").value ||
-      new Date().toISOString().split("T")[0],
-    desc,
-    local: localInput.value || "Geral",
-    valor,
-    pagamento: document.getElementById("pagamento").value,
-    hora: document.getElementById("hora").value || "00:00",
+    data: val("data"),
+    hora: val("hora"),
+    desc: val("desc"),
+    local: val("local"),
+    valor: parseFloat(val("valor")),
+    pagamento: val("pagamento"),
   };
 
-  if (!bancoDeDados[periodoAtual]) bancoDeDados[periodoAtual] = [];
-  bancoDeDados[periodoAtual].push(d);
-  localStorage.setItem("financeiro_db", JSON.stringify(bancoDeDados));
+  if (!d.valor || isNaN(d.valor)) {
+    alert("⚠️ Por favor, insira um valor válido.");
+    return;
+  }
 
-  // Limpeza de campos
-  [valorInput, descInput, localInput].forEach((i) => (i.value = ""));
+  despesas.push(d);
+  salvar();
   renderizarTudo();
+  limparCampos(["data", "hora", "desc", "local", "valor"]);
 }
 
 function addFixa() {
-  const dI = document.getElementById("fixaDesc");
-  const vI = document.getElementById("fixaValor");
-  const lI = document.getElementById("fixaLocal");
-  const desc = dI.value;
-  const valor = parseFloat(vI.value);
+  const f = {
+    desc: val("fixaDesc"),
+    valor: parseFloat(val("fixaValor")),
+    data: val("fixaData"),
+    local: val("fixaLocal"),
+  };
 
-  if (!desc || isNaN(valor)) return alert("Sênior, dados incompletos!");
+  if (!f.valor) return;
 
-  despesasFixas.push({ desc, valor, local: lI.value || "Fixa" });
+  despesasFixas.push(f);
   localStorage.setItem("fixas", JSON.stringify(despesasFixas));
-  [dI, vI, lI].forEach((i) => (i.value = ""));
+  renderizarTudo();
+  limparCampos(["fixaDesc", "fixaValor", "fixaData", "fixaLocal"]);
+}
+
+function inserirLinhaNaTabela(d, index) {
+  const tr = document.createElement("tr");
+  tr.className = "hover:bg-slate-50 transition-colors group";
+  tr.innerHTML = `
+        <td class="px-6 py-4">
+            <span class="font-medium text-slate-700">${d.data}</span><br>
+            <span class="text-[10px] text-slate-400">${d.hora}</span>
+        </td>
+        <td class="px-6 py-4 font-semibold text-slate-800">${d.desc}</td>
+        <td class="px-6 py-4 text-slate-500">${d.local || "-"}</td>
+        <td class="px-6 py-4 text-right font-bold text-emerald-600 italic">R$ ${d.valor.toFixed(
+          2
+        )}</td>
+        <td class="px-6 py-4"><span class="bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase">${
+          d.pagamento
+        }</span></td>
+        <td class="px-6 py-4 text-center">
+            <button onclick="remover(${index})" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all opacity-0 group-hover:opacity-100">
+                🗑️
+            </button>
+        </td>
+    `;
+  document.getElementById("tabela").appendChild(tr);
+}
+
+function recalcular() {
+  let total = 0;
+  let porPagamento = {};
+  let porLocal = {};
+
+  // Processar Variáveis
+  despesas.forEach((d) => {
+    total += d.valor;
+    if (d.pagamento)
+      porPagamento[d.pagamento] = (porPagamento[d.pagamento] || 0) + d.valor;
+    if (d.local) porLocal[d.local] = (porLocal[d.local] || 0) + d.valor;
+  });
+
+  // Processar Fixas
+  despesasFixas.forEach((f) => {
+    total += f.valor;
+    let loc = f.local || "Fixas";
+    porLocal[loc] = (porLocal[loc] || 0) + f.valor;
+  });
+
+  // Dashboard UI
+  document.getElementById("total").innerText = "R$ " + total.toFixed(2);
+
+  const saldo = limite - total;
+  const elSaldo = document.getElementById("saldoLimite");
+  elSaldo.innerText = "R$ " + saldo.toFixed(2);
+  elSaldo.className = `font-bold ${
+    saldo < 0 ? "text-red-500" : "text-indigo-600"
+  }`;
+
+  // Renderizar Listas Auxiliares
+  atualizarWidgets("totaisPag", porPagamento);
+  atualizarWidgets("totaisLocal", porLocal);
+}
+
+function atualizarWidgets(id, objeto) {
+  const el = document.getElementById(id);
+  let html = "";
+  for (let key in objeto) {
+    html += `
+            <div class="flex justify-between items-center text-xs">
+                <span class="text-slate-400">${key}</span>
+                <span class="font-bold text-slate-700">R$ ${objeto[key].toFixed(
+                  2
+                )}</span>
+            </div>`;
+  }
+  el.innerHTML =
+    html ||
+    '<p class="text-[10px] text-slate-300 italic text-center py-2">Sem dados</p>';
+}
+
+// Funções de Gerenciamento
+function remover(index) {
+  despesas.splice(index, 1);
+  salvar();
   renderizarTudo();
 }
 
-// --- EDIÇÃO E REMOÇÃO ---
-function setEditMode(idx) {
-  indexEditando = idx;
-  renderizarTudo();
-}
-function salvarEdicao(idx) {
-  bancoDeDados[periodoAtual][idx].desc =
-    document.getElementById("edit-desc").value;
-  bancoDeDados[periodoAtual][idx].valor =
-    parseFloat(document.getElementById("edit-valor").value) || 0;
-  localStorage.setItem("financeiro_db", JSON.stringify(bancoDeDados));
-  indexEditando = null;
-  renderizarTudo();
-}
-
-function setEditModeFixa(idx) {
-  indexEditandoFixa = idx;
-  renderizarTudo();
-}
-function salvarEdicaoFixa(idx) {
-  despesasFixas[idx].desc = document.getElementById("edit-fixa-desc").value;
-  despesasFixas[idx].valor =
-    parseFloat(document.getElementById("edit-fixa-valor").value) || 0;
+function removerFixa(index) {
+  despesasFixas.splice(index, 1);
   localStorage.setItem("fixas", JSON.stringify(despesasFixas));
-  indexEditandoFixa = null;
   renderizarTudo();
 }
 
-function removerFixa(idx) {
-  if (confirm("Excluir custo fixo?")) {
-    despesasFixas.splice(idx, 1);
-    localStorage.setItem("fixas", JSON.stringify(despesasFixas));
-    renderizarTudo();
-  }
+function definirLimite() {
+  const valInput = document.getElementById("limiteInput").value;
+  limite = parseFloat(valInput) || 0;
+  localStorage.setItem("limite", limite);
+  recalcular();
 }
 
-function confirmarRemocao(idx) {
-  const modal = document.getElementById("modalOverlay");
-  if (modal) {
-    modal.style.display = "flex";
-    document.getElementById("btnConfirmarDeletar").onclick = () => {
-      bancoDeDados[periodoAtual].splice(idx, 1);
-      localStorage.setItem("financeiro_db", JSON.stringify(bancoDeDados));
-      renderizarTudo();
-      modal.style.display = "none";
-    };
-  } else {
-    if (confirm("Excluir lançamento?")) {
-      bancoDeDados[periodoAtual].splice(idx, 1);
-      localStorage.setItem("financeiro_db", JSON.stringify(bancoDeDados));
-      renderizarTudo();
-    }
-  }
+// Helpers
+function val(id) {
+  return document.getElementById(id).value;
+}
+function salvar() {
+  localStorage.setItem("despesas", JSON.stringify(despesas));
+}
+function limparCampos(ids) {
+  ids.forEach((id) => (document.getElementById(id).value = ""));
 }
 
-// --- RESUMOS E UI ---
-function mostrarAba(aba) {
-  document
-    .getElementById("abaVariaveis")
-    .classList.toggle("hidden", aba !== "variaveis");
-  document
-    .getElementById("abaFixas")
-    .classList.toggle("hidden", aba === "variaveis");
-  document
-    .getElementById("btn-variaveis")
-    .classList.toggle("sidebar-active", aba === "variaveis");
-  document
-    .getElementById("btn-fixas")
-    .classList.toggle("sidebar-active", aba !== "variaveis");
-  document.getElementById("tituloPagina").innerText =
-    aba === "variaveis" ? "Dashboard de Variáveis" : "Custos Recorrentes";
-}
-
-function atualizarResumos(total, pag, loc) {
-  document.getElementById("total").innerText =
-    "R$ " + total.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-  let saldo = limite - total;
-  document.getElementById(
-    "saldoLimite"
-  ).innerText = `Disponível: R$ ${saldo.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-  })}`;
-  let percent = limite > 0 ? (total / limite) * 100 : 0;
-  document.getElementById("progressFill").style.width =
-    Math.min(percent, 100) + "%";
-
-  // Alerta visual de limite
-  document
-    .getElementById("progressFill")
-    .classList.toggle("bg-red-500", percent >= 90);
-
-  renderizarListaLateral("totaisPag", pag, "border-l-indigo-500");
-  renderizarListaLateral("totaisLocal", loc, "border-l-amber-400");
-}
-
-function renderizarListaLateral(id, obj, border) {
-  const container = document.getElementById(id);
-  if (!container) return;
-  container.innerHTML = Object.entries(obj)
-    .sort((a, b) => b[1] - a[1])
-    .map(
-      ([key, val]) => `
-        <div class="flex justify-between items-center p-4 dark:bg-white/5 bg-slate-100 rounded-2xl border-l-4 ${border}">
-            <span class="text-[9px] font-black opacity-60 uppercase truncate mr-2">${key}</span>
-            <span class="text-xs font-black italic text-indigo-500">R$ ${val.toFixed(
-              2
-            )}</span>
-        </div>`
-    )
-    .join("");
-}
-
-function getBadgeClass(pag) {
-  const p = pag.toLowerCase();
-  if (p.includes("pix")) return "badge-pix";
-  if (p.includes("alice")) return "badge-credito-alice";
-  if (p.includes("lucas")) return "badge-credito-lucas";
-  return "badge-debito";
+function exportarExcel() {
+  const data = [
+    ...despesas.map((d) => ({ ...d, Tipo: "Variável" })),
+    ...despesasFixas.map((f) => ({ ...f, Tipo: "Fixa" })),
+  ];
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Relatório Geral");
+  XLSX.writeFile(wb, "Relatorio_Financeiro.xlsx");
 }
