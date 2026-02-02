@@ -1,74 +1,57 @@
-/** * ARCHITECTURE: Event-Driven Dashboard
- * Todas as funções de dados invocam 'recalcular()' para garantir sincronia da UI.
+/**
+ * ARQUITETURA DE DADOS: Clean & Sync
+ * Mantivemos todas as suas variáveis originais para garantir compatibilidade com o LocalStorage.
  */
 
-let despesas = JSON.parse(localStorage.getItem("despesas")) || [];
-let despesasFixas = JSON.parse(localStorage.getItem("fixas")) || [];
-let limite = parseFloat(localStorage.getItem("limite")) || 0;
+let despesas = [];
+let despesasFixas = [];
+let total = 0;
+let limite = 0;
 
-// Inicialização segura
+// INICIALIZAÇÃO DO SISTEMA
 window.onload = () => {
-  document.getElementById("limiteInput").value = limite || "";
-  renderizarTudo();
+  // Recuperar Dados do LocalStorage
+  let d = localStorage.getItem("despesas");
+  let f = localStorage.getItem("fixas");
+  let lim = localStorage.getItem("limite");
+
+  if (lim) {
+    limite = parseFloat(lim);
+    document.getElementById("limiteInput").value = limite;
+  }
+  if (d) {
+    despesas = JSON.parse(d);
+  }
+  if (f) {
+    despesasFixas = JSON.parse(f);
+  }
+
+  renderizarTudo(); // Renderiza tabelas e reconstrói o dashboard
 };
 
-function renderizarTudo() {
-  // 1. Limpar e Popular Tabela Variáveis
-  const tabela = document.getElementById("tabela");
-  tabela.innerHTML = "";
-  despesas.forEach((d, index) => inserirLinhaNaTabela(d, index));
-
-  // 2. Limpar e Popular Lista de Fixas
-  const listaF = document.getElementById("listaFixas");
-  listaF.innerHTML = "";
-  despesasFixas.forEach((f, index) => {
-    listaF.innerHTML += `
-            <li class="flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-100 group">
-                <div class="flex items-center gap-3">
-                    <span class="bg-white p-2 rounded-lg shadow-sm">📌</span>
-                    <div>
-                        <p class="font-bold text-slate-700">${f.desc}</p>
-                        <p class="text-xs text-slate-400">${
-                          f.local || "Sem local"
-                        } • Vence dia: ${
-      f.data ? f.data.split("-").reverse()[0] : "--"
-    }</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4">
-                    <span class="font-bold text-slate-900">R$ ${f.valor.toFixed(
-                      2
-                    )}</span>
-                    <button onclick="removerFixa(${index})" class="text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-600">remover</button>
-                </div>
-            </li>`;
-  });
-
-  recalcular();
-}
-
+// NAVEGAÇÃO ENTRE ABAS
 function mostrarAba(aba) {
   const v = document.getElementById("abaVariaveis");
   const f = document.getElementById("abaFixas");
-  const tV = document.getElementById("tabVariaveis");
-  const tF = document.getElementById("tabFixas");
+  const btnV = document.getElementById("btn-variaveis");
+  const btnF = document.getElementById("btn-fixas");
 
   if (aba === "variaveis") {
     v.classList.remove("hidden");
     f.classList.add("hidden");
-    tV.className = "tab-btn tab-active";
-    tF.className = "tab-btn tab-inactive";
+    btnV.className = "tab-btn tab-active";
+    btnF.className = "tab-btn tab-inactive";
   } else {
     v.classList.add("hidden");
     f.classList.remove("hidden");
-    tF.className = "tab-btn tab-active";
-    tV.className = "tab-btn tab-inactive";
+    btnF.className = "tab-btn tab-active";
+    btnV.className = "tab-btn tab-inactive";
   }
 }
 
-// LOGICA DE ADIÇÃO (MELHORADA)
+// LÓGICA DE VARIÁVEIS
 function add() {
-  const d = {
+  let d = {
     data: val("data"),
     hora: val("hora"),
     desc: val("desc"),
@@ -77,19 +60,53 @@ function add() {
     pagamento: val("pagamento"),
   };
 
-  if (!d.valor || isNaN(d.valor)) {
-    alert("⚠️ Por favor, insira um valor válido.");
-    return;
-  }
+  if (!d.valor || isNaN(d.valor)) return;
 
   despesas.push(d);
   salvar();
   renderizarTudo();
-  limparCampos(["data", "hora", "desc", "local", "valor"]);
+
+  // Limpeza de UI
+  ["data", "hora", "desc", "local", "valor"].forEach(
+    (id) => (document.getElementById(id).value = "")
+  );
 }
 
+function inserirLinhaNaTabela(d, index) {
+  let tr = `
+        <tr class="bg-white hover:bg-indigo-50/50 transition-colors shadow-sm">
+            <td class="px-6 py-4 rounded-l-xl border-y border-l border-slate-50">
+                <p class="font-bold text-slate-700">${d.data || "---"}</p>
+                <p class="text-[10px] text-slate-400">${d.hora || ""}</p>
+            </td>
+            <td class="px-6 py-4 border-y border-slate-50 font-medium text-slate-600">${
+              d.desc || ""
+            }</td>
+            <td class="px-6 py-4 border-y border-slate-50 text-slate-500">${
+              d.local || ""
+            }</td>
+            <td class="px-6 py-4 border-y border-slate-50 text-right">
+                <span class="font-bold text-emerald-600 text-base italic">R$ ${d.valor.toFixed(
+                  2
+                )}</span>
+            </td>
+            <td class="px-6 py-4 border-y border-slate-50">
+                <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter border border-slate-200">${
+                  d.pagamento || ""
+                }</span>
+            </td>
+            <td class="px-6 py-4 rounded-r-xl border-y border-r border-slate-50 text-center">
+                <button onclick="remover(${index})" class="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50">🗑️</button>
+            </td>
+        </tr>
+        <tr class="row-spacer"></tr>
+    `;
+  document.getElementById("tabela").insertAdjacentHTML("beforeend", tr);
+}
+
+// LÓGICA DE FIXAS
 function addFixa() {
-  const f = {
+  let f = {
     desc: val("fixaDesc"),
     valor: parseFloat(val("fixaValor")),
     data: val("fixaData"),
@@ -101,87 +118,15 @@ function addFixa() {
   despesasFixas.push(f);
   localStorage.setItem("fixas", JSON.stringify(despesasFixas));
   renderizarTudo();
-  limparCampos(["fixaDesc", "fixaValor", "fixaData", "fixaLocal"]);
+
+  // Limpeza
+  ["fixaDesc", "fixaValor", "fixaData", "fixaLocal"].forEach(
+    (id) => (document.getElementById(id).value = "")
+  );
+  document.getElementById("fixaDesc").focus();
 }
 
-function inserirLinhaNaTabela(d, index) {
-  const tr = document.createElement("tr");
-  tr.className = "hover:bg-slate-50 transition-colors group";
-  tr.innerHTML = `
-        <td class="px-6 py-4">
-            <span class="font-medium text-slate-700">${d.data}</span><br>
-            <span class="text-[10px] text-slate-400">${d.hora}</span>
-        </td>
-        <td class="px-6 py-4 font-semibold text-slate-800">${d.desc}</td>
-        <td class="px-6 py-4 text-slate-500">${d.local || "-"}</td>
-        <td class="px-6 py-4 text-right font-bold text-emerald-600 italic">R$ ${d.valor.toFixed(
-          2
-        )}</td>
-        <td class="px-6 py-4"><span class="bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase">${
-          d.pagamento
-        }</span></td>
-        <td class="px-6 py-4 text-center">
-            <button onclick="remover(${index})" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all opacity-0 group-hover:opacity-100">
-                🗑️
-            </button>
-        </td>
-    `;
-  document.getElementById("tabela").appendChild(tr);
-}
-
-function recalcular() {
-  let total = 0;
-  let porPagamento = {};
-  let porLocal = {};
-
-  // Processar Variáveis
-  despesas.forEach((d) => {
-    total += d.valor;
-    if (d.pagamento)
-      porPagamento[d.pagamento] = (porPagamento[d.pagamento] || 0) + d.valor;
-    if (d.local) porLocal[d.local] = (porLocal[d.local] || 0) + d.valor;
-  });
-
-  // Processar Fixas
-  despesasFixas.forEach((f) => {
-    total += f.valor;
-    let loc = f.local || "Fixas";
-    porLocal[loc] = (porLocal[loc] || 0) + f.valor;
-  });
-
-  // Dashboard UI
-  document.getElementById("total").innerText = "R$ " + total.toFixed(2);
-
-  const saldo = limite - total;
-  const elSaldo = document.getElementById("saldoLimite");
-  elSaldo.innerText = "R$ " + saldo.toFixed(2);
-  elSaldo.className = `font-bold ${
-    saldo < 0 ? "text-red-500" : "text-indigo-600"
-  }`;
-
-  // Renderizar Listas Auxiliares
-  atualizarWidgets("totaisPag", porPagamento);
-  atualizarWidgets("totaisLocal", porLocal);
-}
-
-function atualizarWidgets(id, objeto) {
-  const el = document.getElementById(id);
-  let html = "";
-  for (let key in objeto) {
-    html += `
-            <div class="flex justify-between items-center text-xs">
-                <span class="text-slate-400">${key}</span>
-                <span class="font-bold text-slate-700">R$ ${objeto[key].toFixed(
-                  2
-                )}</span>
-            </div>`;
-  }
-  el.innerHTML =
-    html ||
-    '<p class="text-[10px] text-slate-300 italic text-center py-2">Sem dados</p>';
-}
-
-// Funções de Gerenciamento
+// REMOÇÃO
 function remover(index) {
   despesas.splice(index, 1);
   salvar();
@@ -194,31 +139,105 @@ function removerFixa(index) {
   renderizarTudo();
 }
 
-function definirLimite() {
-  const valInput = document.getElementById("limiteInput").value;
-  limite = parseFloat(valInput) || 0;
-  localStorage.setItem("limite", limite);
-  recalcular();
+// RECALCULAR (A Única Fonte de Verdade)
+function renderizarTudo() {
+  // Resetar UI
+  document.getElementById("tabela").innerHTML = "";
+  document.getElementById("listaFixas").innerHTML = "";
+
+  total = 0;
+  let porPagamento = {};
+  let porLocal = {};
+
+  // Processar Variáveis
+  despesas.forEach((d, index) => {
+    total += d.valor;
+    inserirLinhaNaTabela(d, index);
+    if (d.pagamento)
+      porPagamento[d.pagamento] = (porPagamento[d.pagamento] || 0) + d.valor;
+    if (d.local) porLocal[d.local] = (porLocal[d.local] || 0) + d.valor;
+  });
+
+  // Processar Fixas
+  despesasFixas.forEach((f, index) => {
+    total += f.valor;
+    let localFixa = f.local || "Fixas";
+    porLocal[localFixa] = (porLocal[localFixa] || 0) + f.valor;
+
+    document.getElementById("listaFixas").innerHTML += `
+            <li class="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100 group transition-all hover:border-indigo-200">
+                <div class="flex items-center gap-4">
+                    <span class="text-xl">📌</span>
+                    <div>
+                        <p class="font-bold text-slate-800">${f.desc}</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">${
+                          f.local || "Sem Categoria"
+                        }</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <span class="font-black text-slate-700">R$ ${f.valor.toFixed(
+                      2
+                    )}</span>
+                    <button onclick="removerFixa(${index})" class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-all font-bold text-xs uppercase">Remover</button>
+                </div>
+            </li>`;
+  });
+
+  // Atualizar Dashboard
+  document.getElementById("total").innerText = "R$ " + total.toFixed(2);
+
+  // Saldo Limite
+  let saldo = limite - total;
+  let elSaldo = document.getElementById("saldoLimite");
+  elSaldo.innerText = "R$ " + saldo.toFixed(2);
+  elSaldo.className = `font-bold ${
+    saldo < 0 ? "text-red-600" : "text-purple-600"
+  }`;
+
+  // Widgets de Totais
+  atualizarWidgetResumo("totaisPag", porPagamento);
+  atualizarWidgetResumo("totaisLocal", porLocal);
 }
 
-// Helpers
-function val(id) {
-  return document.getElementById(id).value;
+function atualizarWidgetResumo(id, objeto) {
+  let el = document.getElementById(id);
+  let html = "";
+  for (let key in objeto) {
+    html += `
+            <div class="flex justify-between border-b border-slate-50 pb-1">
+                <span class="text-slate-500">${key}:</span>
+                <span class="text-slate-800 font-bold">R$ ${objeto[key].toFixed(
+                  2
+                )}</span>
+            </div>`;
+  }
+  el.innerHTML =
+    html || "<p class='text-slate-300 italic text-xs'>Nenhum dado...</p>";
 }
+
+// UTILIDADES
 function salvar() {
   localStorage.setItem("despesas", JSON.stringify(despesas));
 }
-function limparCampos(ids) {
-  ids.forEach((id) => (document.getElementById(id).value = ""));
+function val(id) {
+  return document.getElementById(id).value;
+}
+
+function definirLimite() {
+  let input = document.getElementById("limiteInput").value;
+  limite = parseFloat(input) || 0;
+  localStorage.setItem("limite", limite);
+  renderizarTudo();
 }
 
 function exportarExcel() {
-  const data = [
+  let dados = [
     ...despesas.map((d) => ({ ...d, Tipo: "Variável" })),
     ...despesasFixas.map((f) => ({ ...f, Tipo: "Fixa" })),
   ];
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Relatório Geral");
-  XLSX.writeFile(wb, "Relatorio_Financeiro.xlsx");
+  let ws = XLSX.utils.json_to_sheet(dados);
+  let wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Financeiro");
+  XLSX.writeFile(wb, "Controle_Financeiro.xlsx");
 }
