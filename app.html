@@ -14,15 +14,37 @@
         .nav-active { @apply bg-indigo-600 text-white shadow-md; }
         .nav-inactive { @apply text-slate-500 hover:bg-slate-200; }
         
-        /* Estilos para Edição */
         .editing-row { @apply bg-indigo-50/50 ring-2 ring-indigo-500 ring-inset; }
         .edit-input { @apply w-full bg-white border border-indigo-300 rounded px-2 py-1 text-xs focus:ring-2 focus:ring-indigo-200 outline-none font-medium text-slate-700; }
         
+        /* Modal Overlay */
+        #modalOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            align-items: center; justify-content: center;
+        }
+
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body class="text-slate-900">
+
+    <div id="modalOverlay">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 transform transition-all scale-100">
+            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-2xl mb-6 mx-auto">⚠️</div>
+            <h3 class="text-xl font-extrabold text-slate-800 text-center mb-2">Confirmar Exclusão?</h3>
+            <p class="text-slate-500 text-center text-sm mb-8">Esta ação não pode ser desfeita. O registro será removido permanentemente.</p>
+            <div class="flex gap-3">
+                <button onclick="fecharModal()" class="flex-1 py-3 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-all">Cancelar</button>
+                <button id="btnConfirmarDeletar" class="flex-1 py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-lg shadow-red-200 transition-all">Excluir</button>
+            </div>
+        </div>
+    </div>
 
     <header class="bg-slate-900 text-white py-4 px-6 sticky top-0 z-50 shadow-md">
         <div class="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
@@ -30,9 +52,7 @@
                 <span class="text-2xl">💎</span>
                 <h1 class="text-xl font-extrabold tracking-tight">Financeiro<span class="text-indigo-400">Core</span></h1>
             </div>
-
             <div id="monthSelector" class="flex items-center gap-2 bg-slate-800 p-1 rounded-xl border border-slate-700"></div>
-
             <nav class="flex gap-2 bg-slate-800 p-1 rounded-xl">
                 <button onclick="mostrarAba('variaveis')" id="btn-variaveis" class="nav-tab nav-active">Variáveis</button>
                 <button onclick="mostrarAba('fixas')" id="btn-fixas" class="nav-tab nav-inactive">Fixas</button>
@@ -55,11 +75,11 @@
                 <span class="text-[10px] uppercase font-bold text-slate-400">Gasto Mês</span>
                 <span id="total" class="font-bold text-xl text-slate-800 tracking-tighter">R$ 0,00</span>
             </div>
-            <div class="kpi-card-mini col-span-1">
+            <div class="kpi-card-mini">
                 <span class="text-[10px] uppercase font-bold text-slate-400">💳 Pagamentos</span>
                 <div id="totaisPag" class="text-[10px] leading-tight mt-1 truncate font-medium text-slate-600"></div>
             </div>
-            <div class="kpi-card-mini col-span-1">
+            <div class="kpi-card-mini">
                 <span class="text-[10px] uppercase font-bold text-slate-400">🏪 Locais</span>
                 <div id="totaisLocal" class="text-[10px] leading-tight mt-1 truncate font-medium text-slate-600"></div>
             </div>
@@ -70,7 +90,7 @@
                 <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <h3 class="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-tight">
                         <span class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
-                        Transações: <span id="currentPeriodLabel" class="text-indigo-600">---</span>
+                        Período: <span id="currentPeriodLabel" class="text-indigo-600">---</span>
                     </h3>
                     <button onclick="exportarExcel()" class="text-[10px] font-bold bg-white border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-all">EXPORTAR EXCEL</button>
                 </div>
@@ -94,11 +114,11 @@
             <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
                 <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-7 gap-3 items-end">
                     <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Data/Hora</label><div class="flex gap-1"><input id="data" type="date" class="w-full border border-slate-200 rounded-lg p-2 text-xs outline-none focus:border-indigo-500"><input id="hora" type="time" class="w-full border border-slate-200 rounded-lg p-2 text-xs outline-none focus:border-indigo-500"></div></div>
-                    <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Descrição</label><input id="desc" class="w-full border border-slate-200 rounded-lg p-2 text-xs outline-none focus:border-indigo-500" placeholder="Ex: Mercado"></div>
+                    <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Descrição</label><input id="desc" class="w-full border border-slate-200 rounded-lg p-2 text-xs outline-none focus:border-indigo-500" placeholder="Descrição"></div>
                     <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Local</label><input id="local" class="w-full border border-slate-200 rounded-lg p-2 text-xs outline-none focus:border-indigo-500" placeholder="Onde?"></div>
                     <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Valor</label><input id="valor" type="number" class="w-full border border-slate-200 rounded-lg p-2 text-xs outline-none focus:border-indigo-500 font-bold" placeholder="0.00"></div>
                     <div class="md:col-span-1"><label class="text-[9px] font-bold text-slate-400 uppercase">Pagamento</label><select id="pagamento" class="w-full border border-slate-200 rounded-lg p-2 text-xs outline-none focus:border-indigo-500"><option>Pix</option><option>Débito</option><option>Crédito Alice</option><option>Crédito Lucas</option></select></div>
-                    <button onclick="add()" class="md:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl transition-all shadow-md uppercase text-xs">Adicionar Lançamento</button>
+                    <button onclick="add()" class="md:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl transition-all shadow-md uppercase text-xs">Adicionar</button>
                 </div>
             </section>
         </div>
@@ -112,7 +132,7 @@
                         <input id="fixaValor" type="number" placeholder="Valor R$" class="border border-slate-200 rounded-lg p-2 text-sm outline-none focus:border-indigo-500">
                         <input id="fixaData" type="date" class="border border-slate-200 rounded-lg p-2 text-sm outline-none focus:border-indigo-500">
                         <input id="fixaLocal" placeholder="Categoria" class="border border-slate-200 rounded-lg p-2 text-sm outline-none focus:border-indigo-500">
-                        <button onclick="addFixa()" class="lg:col-span-4 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-black transition-all">Salvar Custo Fixo</button>
+                        <button onclick="addFixa()" class="lg:col-span-4 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-black transition-all">Salvar Fixo</button>
                     </div>
                 </section>
                 <div class="bg-white rounded-2xl border border-slate-100 p-4">
