@@ -1,4 +1,4 @@
-/** * SENIOR CORE v3.0 - Custom Modal System
+/** * SENIOR ARCHITECTURE v4.0 - Sidebar Intelligence & Persistence
  */
 
 let periodoAtual = obterPeriodoAtual();
@@ -7,23 +7,18 @@ let despesasFixas = JSON.parse(localStorage.getItem("fixas")) || [];
 let limite = parseFloat(localStorage.getItem("limite")) || 0;
 let indexEditando = null;
 
-// Função para abrir modal customizado
+// SISTEMA DE MODAL
 function abrirModal(callback) {
   const overlay = document.getElementById("modalOverlay");
-  const btnConfirmar = document.getElementById("btnConfirmarDeletar");
-
+  const btn = document.getElementById("btnConfirmarDeletar");
   overlay.style.display = "flex";
-
-  // Remove listeners antigos para não acumular
-  const novoBtn = btnConfirmar.cloneNode(true);
-  btnConfirmar.parentNode.replaceChild(novoBtn, btnConfirmar);
-
+  const novoBtn = btn.cloneNode(true);
+  btn.parentNode.replaceChild(novoBtn, btn);
   novoBtn.onclick = () => {
     callback();
     fecharModal();
   };
 }
-
 function fecharModal() {
   document.getElementById("modalOverlay").style.display = "none";
 }
@@ -57,7 +52,6 @@ function inicializarAbasPeriodo() {
     "Dez",
   ];
   const hoje = new Date();
-
   for (let i = -3; i <= 0; i++) {
     let d = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
     let p = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -66,10 +60,10 @@ function inicializarAbasPeriodo() {
       .getFullYear()
       .toString()
       .slice(-2)}`;
-    btn.className = `px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
+    btn.className = `px-4 py-1.5 rounded-xl text-[11px] font-bold transition-all ${
       p === periodoAtual
-        ? "bg-indigo-500 text-white shadow-sm"
-        : "text-slate-400 hover:text-white"
+        ? "bg-white text-indigo-600 shadow-sm border border-slate-200"
+        : "text-slate-400 hover:text-slate-600"
     }`;
     btn.onclick = () => {
       periodoAtual = p;
@@ -89,18 +83,18 @@ function renderizarTudo() {
 
   const [ano, mes] = periodoAtual.split("-");
   const mesesNome = [
-    "Janeiro",
-    "Fevereiro",
-    "Março",
-    "Abril",
-    "Maio",
-    "Junho",
-    "Julho",
-    "Agosto",
-    "Setembro",
-    "Outubro",
-    "Novembro",
-    "Dezembro",
+    "JANEIRO",
+    "FEVEREIRO",
+    "MARÇO",
+    "ABRIL",
+    "MAIO",
+    "JUNHO",
+    "JULHO",
+    "AGOSTO",
+    "SETEMBRO",
+    "OUTUBRO",
+    "NOVEMBRO",
+    "DEZEMBRO",
   ];
   document.getElementById("currentPeriodLabel").innerText = `${
     mesesNome[parseInt(mes) - 1]
@@ -113,9 +107,9 @@ function renderizarTudo() {
   let despesasMes = bancoDeDados[periodoAtual] || [];
   despesasMes.forEach((d, index) => {
     totalMes += d.valor;
-    if (d.pagamento)
-      porPagamento[d.pagamento] = (porPagamento[d.pagamento] || 0) + d.valor;
-    if (d.local) porLocal[d.local] = (porLocal[d.local] || 0) + d.valor;
+    porPagamento[d.pagamento] = (porPagamento[d.pagamento] || 0) + d.valor;
+    porLocal[d.local || "Outros"] =
+      (porLocal[d.local || "Outros"] || 0) + d.valor;
     tabela.innerHTML +=
       indexEditando === index
         ? renderRowEdicao(d, index)
@@ -127,46 +121,82 @@ function renderizarTudo() {
     porLocal[f.local || "Fixas"] =
       (porLocal[f.local || "Fixas"] || 0) + f.valor;
     listaF.innerHTML += `
-            <li class="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 items-center">
-                <span class="font-bold text-slate-700 text-xs uppercase">📌 ${
-                  f.desc
-                }</span>
+            <div class="flex justify-between p-5 bg-white rounded-2xl border border-slate-200 items-center shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="p-3 bg-red-50 text-red-500 rounded-xl">📌</div>
+                    <div><span class="font-bold text-slate-800">${
+                      f.desc
+                    }</span><p class="text-[10px] text-slate-400 uppercase tracking-tighter">${
+      f.local || "Recorrente"
+    }</p></div>
+                </div>
                 <div class="flex items-center gap-6">
-                    <span class="font-black text-slate-800 text-sm">R$ ${f.valor.toFixed(
+                    <span class="font-black text-slate-900 text-lg">R$ ${f.valor.toFixed(
                       2
                     )}</span>
-                    <button onclick="removerFixa(${index})" class="text-red-400 hover:text-red-600 text-lg">×</button>
+                    <button onclick="removerFixa(${index})" class="text-slate-300 hover:text-red-500 text-xl font-light transition-all">✕</button>
                 </div>
-            </li>`;
+            </div>`;
   });
 
+  // Dashboards Central
   document.getElementById("total").innerText = "R$ " + totalMes.toFixed(2);
   let saldo = limite - totalMes;
-  document.getElementById("saldoLimite").innerText = "R$ " + saldo.toFixed(2);
-  document.getElementById("saldoLimite").className = `font-bold text-lg ${
-    saldo < 0 ? "text-red-500" : "text-purple-600"
+  const elSaldo = document.getElementById("saldoLimite");
+  elSaldo.innerText = `Disponível: R$ ${saldo.toFixed(2)}`;
+  elSaldo.className = `text-xs font-bold mt-1 ${
+    saldo < 0 ? "text-red-500" : "text-indigo-500"
   }`;
 
-  renderizarWidgetCompacto("totaisPag", porPagamento);
-  renderizarWidgetCompacto("totaisLocal", porLocal);
+  // Sidebar Widgets
+  renderizarWidgetSidebar(
+    "totaisPag",
+    porPagamento,
+    "bg-slate-50 border-slate-100"
+  );
+  renderizarWidgetSidebar(
+    "totaisLocal",
+    porLocal,
+    "bg-slate-50 border-slate-100"
+  );
+}
+
+function renderizarWidgetSidebar(id, obj, style) {
+  const container = document.getElementById(id);
+  container.innerHTML = Object.entries(obj)
+    .map(
+      ([key, val]) => `
+        <div class="flex justify-between items-center p-3 ${style} border rounded-xl">
+            <span class="text-[11px] font-bold text-slate-500 truncate mr-2 uppercase">${key}</span>
+            <span class="text-xs font-black text-slate-800 whitespace-nowrap">R$ ${val.toFixed(
+              2
+            )}</span>
+        </div>
+    `
+    )
+    .join("");
+  if (!container.innerHTML)
+    container.innerHTML = `<p class="text-[10px] text-slate-300 italic">Sem registros neste mês.</p>`;
 }
 
 function renderRowNormal(d, index) {
-  return `<tr class="hover:bg-slate-50 group">
-        <td class="px-6 py-4 text-slate-400 text-xs">${
+  return `<tr class="hover:bg-slate-50/80 transition-all group">
+        <td class="px-6 py-4 text-slate-400 text-xs font-medium">${
           d.data
-        } <span class="opacity-40 ml-1">${d.hora}</span></td>
-        <td class="px-6 py-4 font-semibold text-slate-700">${d.desc}</td>
-        <td class="px-6 py-4 text-slate-500 font-medium">${d.local || "-"}</td>
-        <td class="px-6 py-4"><span class="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-indigo-100">${
+        } <span class="opacity-30 ml-1 font-normal">${d.hora}</span></td>
+        <td class="px-6 py-4 font-bold text-slate-700">${d.desc}</td>
+        <td class="px-6 py-4 text-slate-500 font-semibold text-xs uppercase">${
+          d.local || "-"
+        }</td>
+        <td class="px-6 py-4"><span class="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg text-[10px] font-bold border border-indigo-100 uppercase">${
           d.pagamento
         }</span></td>
-        <td class="px-6 py-4 text-right font-bold text-slate-800 italic">R$ ${d.valor.toFixed(
+        <td class="px-6 py-4 text-right font-black text-slate-900">R$ ${d.valor.toFixed(
           2
         )}</td>
         <td class="px-6 py-4 text-center">
-            <div class="flex items-center justify-center gap-3">
-                <button onclick="setEditMode(${index})" class="text-slate-300 hover:text-indigo-600">✏️</button>
+            <div class="flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-all">
+                <button onclick="setEditMode(${index})" class="text-indigo-400 hover:text-indigo-700">✏️</button>
                 <button onclick="confirmarRemocao(${index})" class="text-slate-300 hover:text-red-500">🗑️</button>
             </div>
         </td>
@@ -198,7 +228,7 @@ function renderRowEdicao(d, index) {
         <td class="px-4 py-3 text-right"><input id="editValor" type="number" value="${
           d.valor
         }" class="edit-input text-right font-bold"></td>
-        <td class="px-4 py-3 text-center"><div class="flex gap-2"><button onclick="salvarEdicao(${index})" class="bg-emerald-500 text-white px-2 py-1 rounded text-[10px] font-bold">OK</button><button onclick="setEditMode(null)" class="bg-slate-400 text-white px-2 py-1 rounded text-[10px] font-bold">X</button></div></td>
+        <td class="px-4 py-3 text-center"><div class="flex gap-2"><button onclick="salvarEdicao(${index})" class="bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold">OK</button><button onclick="setEditMode(null)" class="bg-slate-400 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold">X</button></div></td>
     </tr>`;
 }
 
@@ -206,7 +236,6 @@ function setEditMode(index) {
   indexEditando = index;
   renderizarTudo();
 }
-
 function salvarEdicao(index) {
   const d = {
     data: val("editData"),
@@ -216,14 +245,12 @@ function salvarEdicao(index) {
     valor: parseFloat(val("editValor")),
     pagamento: val("editPag"),
   };
-  if (!d.valor) return alert("Insira um valor!");
+  if (!d.valor) return;
   bancoDeDados[periodoAtual][index] = d;
   indexEditando = null;
   salvarGeral();
   renderizarTudo();
 }
-
-// REMOÇÃO COM MODAL CUSTOMIZADO
 function confirmarRemocao(index) {
   abrirModal(() => {
     bancoDeDados[periodoAtual].splice(index, 1);
@@ -231,7 +258,6 @@ function confirmarRemocao(index) {
     renderizarTudo();
   });
 }
-
 function removerFixa(index) {
   abrirModal(() => {
     despesasFixas.splice(index, 1);
@@ -239,7 +265,6 @@ function removerFixa(index) {
     renderizarTudo();
   });
 }
-
 function add() {
   const d = {
     data: val("data"),
@@ -258,7 +283,6 @@ function add() {
     (id) => (document.getElementById(id).value = "")
   );
 }
-
 function addFixa() {
   const f = {
     desc: val("fixaDesc"),
@@ -274,17 +298,6 @@ function addFixa() {
     (id) => (document.getElementById(id).value = "")
   );
 }
-
-function renderizarWidgetCompacto(id, obj) {
-  const el = document.getElementById(id);
-  el.innerHTML = Object.entries(obj)
-    .map(
-      ([k, v]) => `${k}: <span class="text-slate-900">R$${v.toFixed(0)}</span>`
-    )
-    .join(" • ");
-  if (!el.innerHTML) el.innerHTML = "---";
-}
-
 function salvarGeral() {
   localStorage.setItem("financeiro_db", JSON.stringify(bancoDeDados));
 }
