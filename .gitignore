@@ -1,0 +1,21 @@
+# IDEs e Editores
+.vscode/
+.idea/
+*.swp
+*.thumbs
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependências (caso venha a usar npm)
+node_modules/
+dist/
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos de ambiente/configuração sensível
+.env

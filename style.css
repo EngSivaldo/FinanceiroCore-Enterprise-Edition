@@ -1,0 +1,77 @@
+body {
+  font-family: Arial;
+  margin: 0;
+  transition: 0.3s;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  background: #1e88e5;
+  color: white;
+}
+
+button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #4caf50;
+  color: white;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  padding: 20px;
+}
+
+input,
+select {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th {
+  background: #1e88e5;
+  color: white;
+  padding: 12px;
+}
+
+td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+h2 {
+  text-align: center;
+  margin: 20px;
+}
+
+/* Modo escuro */
+
+.dark {
+  background: #121212;
+  color: white;
+}
+
+.dark table {
+  color: white;
+}
+
+.dark input,
+.dark select {
+  background: #333;
+  color: white;
+  border: 1px solid #555;
+}
