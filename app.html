@@ -3,164 +3,367 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinanceiroCore | Enterprise Color Edition</title>
+    <title>FinanceiroCore | Enterprise V6.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; overflow: hidden; }
-        
-        /* Sidebar Fixa */
-        .sidebar { 
-            width: 380px; 
-            @apply bg-slate-50 border-l border-slate-200 h-screen p-6 flex flex-col gap-6 shadow-2xl;
-            position: fixed; right: 0; top: 0; z-index: 50;
-        }
-
-        .main-content { margin-right: 380px; @apply h-screen overflow-y-auto p-8 pb-20; }
-
-        /* Scroll Interno na Sidebar para não quebrar */
-        .scroll-list { max-height: 240px; overflow-y: auto; @apply pr-2 space-y-2; }
-        .scroll-list::-webkit-scrollbar { width: 4px; }
-        .scroll-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-        /* RESTAURAÇÃO DAS CORES DE ACENTO */
-        .card-accent-blue { border-left: 5px solid #3b82f6 !important; @apply bg-white shadow-sm; }
-        .card-accent-amber { border-left: 5px solid #f59e0b !important; @apply bg-white shadow-sm; }
-        
-        /* BADGES DE PAGAMENTO */
-        .badge-pix { @apply bg-emerald-100 text-emerald-700 border-emerald-200; }
-        .badge-credito-alice { @apply bg-purple-100 text-purple-700 border-purple-200; }
-        .badge-credito-lucas { @apply bg-blue-100 text-blue-700 border-blue-200; }
-        .badge-debito { @apply bg-slate-100 text-slate-700 border-slate-200; }
-
-        #modalOverlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); z-index: 100;
-            align-items: center; justify-content: center;
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .sidebar-item:hover { background: rgba(99, 102, 241, 0.1); color: #4f46e5; }
+        .sidebar-active { background: #4f46e5 !important; color: white !important; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4); }
+        .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .badge-pix { background: #ecfdf5; color: #059669; }
+        .badge-alice { background: #eef2ff; color: #4f46e5; }
+        .badge-lucas { background: #fff7ed; color: #ea580c; }
+        .badge-debito { background: #f1f5f9; color: #64748b; }
+        input, select { border: 1px solid #e2e8f0 !important; outline: none; }
+        input:focus { ring: 2px; border-color: #6366f1 !important; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
-<body class="text-slate-900">
+<body class="flex min-h-screen overflow-hidden">
 
-    <div id="modalOverlay">
-        <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full text-center">
-            <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-3xl mb-6 mx-auto">🗑️</div>
-            <h3 class="text-2xl font-extrabold text-slate-800 mb-2">Excluir?</h3>
-            <div class="flex gap-4 mt-8">
-                <button onclick="fecharModal()" class="flex-1 py-4 rounded-2xl font-bold text-slate-400 bg-slate-100">Voltar</button>
-                <button id="btnConfirmarDeletar" class="flex-1 py-4 rounded-2xl font-bold text-white bg-red-500 shadow-lg shadow-red-100">Excluir</button>
+    <aside class="w-72 bg-white border-r border-slate-200 flex flex-col p-6 z-50">
+        <div class="flex items-center gap-3 mb-10 px-2">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span class="text-white font-black">F</span>
+            </div>
+            <div>
+                <h1 class="text-lg font-black tracking-tight">FinanceiroCore</h1>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Enterprise Edition</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 space-y-2">
+            <button onclick="mostrarAba('variaveis')" id="btn-variaveis" class="sidebar-item sidebar-active w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all">
+                <span>📊</span> Despesas Variáveis
+            </button>
+            <button onclick="mostrarAba('fixas')" id="btn-fixas" class="sidebar-item w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold text-slate-500 transition-all">
+                <span>📌</span> Custos Recorrentes
+            </button>
+        </nav>
+
+        <div class="mt-auto p-5 bg-slate-50 rounded-[2rem] border border-slate-100">
+            <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Limite Mensal</p>
+            <input type="number" id="limiteInput" onchange="definirLimite()" class="w-full bg-transparent text-xl font-black text-slate-800" placeholder="0.00">
+            <div class="w-full bg-slate-200 h-1.5 rounded-full mt-3 overflow-hidden">
+                <div id="progressFill" class="bg-indigo-600 h-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <p id="saldoLimite" class="text-[10px] font-bold text-indigo-600 mt-2 italic">Disponível: R$ 0,00</p>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto">
+        <header class="p-8 flex justify-between items-center sticky top-0 bg-[#f8fafc]/80 backdrop-blur-md z-40">
+            <div>
+                <h2 id="tituloPagina" class="text-2xl font-black text-slate-800 tracking-tight">Dashboard de Variáveis</h2>
+                <div id="monthSelector" class="flex gap-2 mt-3"></div>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gasto Total Período</p>
+                <h3 id="total" class="text-3xl font-black text-indigo-600 italic">R$ 0,00</h3>
+            </div>
+        </header>
+
+        <div class="px-8 pb-12 grid grid-cols-12 gap-8">
+            <div class="col-span-12 lg:col-span-8 space-y-8">
+                
+                <section id="abaVariaveis" class="space-y-6">
+                    <div class="glass-card p-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <h4 class="font-black text-slate-800 uppercase text-[10px] tracking-widest">Novo Lançamento</h4>
+                            <button onclick="document.getElementById('formAdd').classList.toggle('hidden')" class="text-indigo-600 font-bold text-[10px] uppercase">Alternar Form</button>
+                        </div>
+                        <div id="formAdd" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <input id="data" type="date" class="p-3 bg-slate-50 rounded-xl text-xs font-bold">
+                            <input id="desc" type="text" placeholder="Descrição" class="p-3 bg-slate-50 rounded-xl text-xs font-bold">
+                            <input id="local" type="text" placeholder="Local" class="p-3 bg-slate-50 rounded-xl text-xs font-bold">
+                            <input id="valor" type="number" placeholder="Valor R$" class="p-3 bg-slate-50 rounded-xl text-xs font-black">
+                            <select id="pagamento" class="p-3 bg-slate-50 rounded-xl text-xs font-bold">
+                                <option>Pix</option><option>Débito</option>
+                                <option>Crédito Alice</option><option>Crédito Lucas</option>
+                            </select>
+                            <input id="hora" type="time" class="p-3 bg-slate-50 rounded-xl text-xs font-bold">
+                            <button onclick="add()" class="md:col-span-2 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all">Registrar Gasto</button>
+                        </div>
+                    </div>
+
+                    <div class="glass-card overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 border-b border-slate-100">
+                                <tr>
+                                    <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase">Data</th>
+                                    <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase">Descrição</th>
+                                    <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase">Pagamento</th>
+                                    <th class="px-6 py-4 text-right text-[9px] font-black text-slate-400 uppercase">Valor</th>
+                                    <th class="px-6 py-4 text-center text-[9px] font-black text-slate-400 uppercase">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela" class="divide-y divide-slate-50 text-sm"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="abaFixas" class="hidden space-y-6">
+                    <div class="glass-card p-8">
+                        <h4 class="font-black text-slate-800 uppercase text-[10px] tracking-widest mb-6 italic">📌 Custos Permanentes</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <input id="fixaDesc" type="text" placeholder="Nome da Despesa" class="p-4 bg-slate-50 rounded-xl text-xs font-bold">
+                            <input id="fixaLocal" type="text" placeholder="Categoria" class="p-4 bg-slate-50 rounded-xl text-xs font-bold">
+                            <input id="fixaValor" type="number" placeholder="R$ 0,00" class="p-4 bg-slate-50 rounded-xl text-xs font-black">
+                            <button onclick="addFixa()" class="md:col-span-3 bg-slate-900 text-white p-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all">Salvar Fixa</button>
+                        </div>
+                    </div>
+                    <div id="listaFixas" class="space-y-3"></div>
+                </section>
+            </div>
+
+            <div class="col-span-12 lg:col-span-4 space-y-6">
+                <div class="glass-card p-8">
+                    <h5 class="text-[10px] font-black text-slate-400 uppercase mb-6 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Canal de Saída
+                    </h5>
+                    <div id="totaisPag" class="space-y-3"></div>
+                </div>
+                <div class="glass-card p-8 border-t-4 border-t-amber-400">
+                    <h5 class="text-[10px] font-black text-slate-400 uppercase mb-6 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span> Por Local/Categoria
+                    </h5>
+                    <div id="totaisLocal" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="modalOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-[100] items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] p-10 max-w-sm w-full text-center shadow-2xl">
+            <h3 class="text-xl font-black text-slate-800 mb-2">Confirmar Exclusão?</h3>
+            <p class="text-slate-500 text-sm mb-8">Esta ação não pode ser desfeita.</p>
+            <div class="flex gap-3">
+                <button onclick="fecharModal()" class="flex-1 py-4 font-bold text-slate-400">Cancelar</button>
+                <button id="btnConfirmarDeletar" class="flex-1 py-4 bg-red-500 text-white rounded-2xl font-black shadow-lg">Deletar</button>
             </div>
         </div>
     </div>
 
-    <main class="main-content">
-        <header class="flex justify-between items-center mb-10">
-            <div class="flex items-center gap-4">
-                <div class="w-14 h-14 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl shadow-indigo-100">💎</div>
-                <div>
-                    <h1 class="text-2xl font-extrabold tracking-tight text-slate-800 italic">Financeiro<span class="text-indigo-600">Core</span></h1>
-                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em]">Enterprise Edition v6.3</p>
-                </div>
-            </div>
+    <script>
+        // --- MOTOR FINANCEIRO CORE v7.0 ---
+        let periodoAtual = obterPeriodoAtual();
+        let bancoDeDados = JSON.parse(localStorage.getItem("financeiro_db")) || {};
+        let despesasFixas = JSON.parse(localStorage.getItem("fixas")) || [];
+        let limite = parseFloat(localStorage.getItem("limite")) || 0;
+        let indexEditando = null;
+        let indexEditandoFixa = null;
 
-            <div class="flex items-center gap-4">
-                <div id="monthSelector" class="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm"></div>
-                <nav class="flex gap-1 bg-slate-200 p-1 rounded-2xl">
-                    <button onclick="mostrarAba('variaveis')" id="btn-variaveis" class="px-6 py-2 rounded-xl font-bold text-sm transition-all bg-white text-indigo-600 shadow-sm">Variáveis</button>
-                    <button onclick="mostrarAba('fixas')" id="btn-fixas" class="px-6 py-2 rounded-xl font-bold text-sm transition-all text-slate-500">Fixas</button>
-                </nav>
-            </div>
-        </header>
+        function obterPeriodoAtual() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        }
 
-        <div id="abaVariaveis" class="space-y-8">
-            <section class="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
-                <h4 class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-6">Novo Lançamento</h4>
-                <div class="grid grid-cols-1 md:grid-cols-7 gap-4 items-end">
-                    <div class="md:col-span-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1">Data/Hora</label><div class="flex gap-1"><input id="data" type="date" class="w-full bg-slate-50 border-none rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 shadow-inner"><input id="hora" type="time" class="w-full bg-slate-50 border-none rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 shadow-inner"></div></div>
-                    <div class="md:col-span-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1">Descrição</label><input id="desc" class="w-full bg-slate-50 border-none rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 shadow-inner" placeholder="O que?"></div>
-                    <div class="md:col-span-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1">Local</label><input id="local" class="w-full bg-slate-50 border-none rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 shadow-inner" placeholder="Onde?"></div>
-                    <div class="md:col-span-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1">Valor R$</label><input id="valor" type="number" class="w-full bg-slate-50 border-none rounded-xl p-3 text-xs font-black focus:ring-2 focus:ring-indigo-500 shadow-inner" placeholder="0.00"></div>
-                    <div class="md:col-span-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1">Pagamento</label><select id="pagamento" class="w-full bg-slate-50 border-none rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 shadow-inner"><option>Pix</option><option>Débito</option><option>Crédito Alice</option><option>Crédito Lucas</option></select></div>
-                    <button onclick="add()" class="md:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-indigo-100 uppercase text-xs tracking-widest">Registrar Gasto</button>
-                </div>
-            </section>
+        window.onload = () => {
+            inicializarAbasPeriodo();
+            if(document.getElementById("limiteInput")) document.getElementById("limiteInput").value = limite;
+            renderizarTudo();
+        };
 
-            <section class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-white">
-                    <h3 id="currentPeriodLabel" class="font-extrabold text-slate-800 uppercase tracking-tight italic">FEVEREIRO / 2026</h3>
-                    <button onclick="exportarExcel()" class="text-[10px] font-black uppercase text-slate-400 hover:text-indigo-600 transition-colors">Exportar Excel</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-black tracking-widest">
-                            <tr>
-                                <th class="px-8 py-4">Data/Hora</th>
-                                <th class="px-8 py-4">Descrição</th>
-                                <th class="px-8 py-4">Local</th>
-                                <th class="px-8 py-4">Pagamento</th>
-                                <th class="px-8 py-4 text-right">Valor</th>
-                                <th class="px-8 py-4 text-center">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela" class="divide-y divide-slate-50 bg-white"></tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
+        function inicializarAbasPeriodo() {
+            const selector = document.getElementById("monthSelector");
+            if(!selector) return;
+            selector.innerHTML = "";
+            const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+            const hoje = new Date();
+            for (let i = -3; i <= 0; i++) {
+                let d = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
+                let p = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                let btn = document.createElement("button");
+                btn.innerText = `${meses[d.getMonth()]} ${d.getFullYear().toString().slice(-2)}`;
+                btn.className = `px-4 py-1.5 rounded-xl text-[10px] font-black transition-all ${p === periodoAtual ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`;
+                btn.onclick = () => { periodoAtual = p; indexEditando = null; indexEditandoFixa = null; inicializarAbasPeriodo(); renderizarTudo(); };
+                selector.appendChild(btn);
+            }
+        }
 
-        <div id="abaFixas" class="hidden max-w-4xl mx-auto space-y-6">
-            <section class="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm border-t-4 border-t-indigo-600">
-                <h2 class="text-xl font-extrabold text-slate-800 mb-8 flex items-center gap-3">📌 Gestão de Despesas Fixas</h2>
-                <div class="grid grid-cols-2 gap-4">
-                    <input id="fixaDesc" placeholder="Descrição do Custo" class="bg-slate-50 rounded-2xl p-4 text-sm border-none shadow-inner">
-                    <input id="fixaValor" type="number" placeholder="Valor Mensal R$" class="bg-slate-50 rounded-2xl p-4 text-sm font-bold border-none shadow-inner">
-                    <input id="fixaData" type="date" class="bg-slate-50 rounded-2xl p-4 text-sm border-none shadow-inner">
-                    <input id="fixaLocal" placeholder="Local/Categoria" class="bg-slate-50 rounded-2xl p-4 text-sm border-none shadow-inner">
-                    <button onclick="addFixa()" class="col-span-2 bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition-all shadow-xl">Cadastrar Despesa Fixa</button>
-                </div>
-            </section>
-            <div id="listaFixas" class="space-y-3"></div>
-        </div>
-    </main>
+        function renderizarTudo() {
+            const tabela = document.getElementById("tabela");
+            const listaF = document.getElementById("listaFixas");
+            if(tabela) tabela.innerHTML = "";
+            if(listaF) listaF.innerHTML = "";
 
-    <aside class="sidebar">
-        <div>
-            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Saúde Financeira</h4>
-            <div id="cardLimite" class="bg-indigo-600 p-6 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100 mb-4 transition-all duration-500">
-                <span class="text-[10px] font-bold text-white/60 uppercase block mb-1">Limite Estabelecido</span>
-                <input id="limiteInput" type="number" class="bg-transparent font-extrabold text-3xl outline-none w-full text-white" onchange="definirLimite()">
-                <div class="progress-bg bg-white/20 h-2 rounded-full mt-4 overflow-hidden"><div id="progressFill" class="h-full bg-white transition-all duration-700"></div></div>
-                <span id="saldoLimite" class="text-[10px] font-bold block mt-3 text-indigo-100 uppercase">Disponível: R$ 0,00</span>
-            </div>
+            let totalMes = 0;
+            let porPagamento = {};
+            let porLocal = {};
+
+            // 1. Variáveis
+            let despesasMes = bancoDeDados[periodoAtual] || [];
+            despesasMes.forEach((d, index) => {
+                totalMes += d.valor;
+                porPagamento[d.pagamento] = (porPagamento[d.pagamento] || 0) + d.valor;
+                porLocal[d.local || "Outros"] = (porLocal[d.local || "Outros"] || 0) + d.valor;
+                if(tabela) tabela.innerHTML += (indexEditando === index) ? renderRowEdicao(d, index) : renderRowNormal(d, index);
+            });
+
+            // 2. Fixas
+            despesasFixas.forEach((f, index) => {
+                totalMes += f.valor;
+                porLocal[f.local || "Fixas"] = (porLocal[f.local || "Fixas"] || 0) + f.valor;
+                if(listaF) listaF.innerHTML += (indexEditandoFixa === index) ? renderFixaEdicao(f, index) : renderFixaNormal(f, index);
+            });
+
+            atualizarResumos(totalMes, porPagamento, porLocal);
+        }
+
+        // --- RENDERS VARIÁVEIS ---
+        function renderRowNormal(d, index) {
+            return `<tr class="group hover:bg-slate-50 transition-all">
+                <td class="px-6 py-4 text-[10px] font-black text-slate-400">${d.data}</td>
+                <td class="px-6 py-4 font-bold text-slate-700 uppercase text-xs">${d.desc}</td>
+                <td class="px-6 py-4"><span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase ${getBadgeClass(d.pagamento)}">${d.pagamento}</span></td>
+                <td class="px-6 py-4 text-right font-black italic text-slate-900">R$ ${d.valor.toFixed(2)}</td>
+                <td class="px-6 py-4 text-center">
+                    <div class="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all">
+                        <button onclick="setEditMode(${index})" class="text-indigo-400">✏️</button>
+                        <button onclick="confirmarRemocao(${index})" class="text-red-300 hover:text-red-500">✕</button>
+                    </div>
+                </td>
+            </tr>`;
+        }
+
+        function renderRowEdicao(d, index) {
+            return `<tr class="bg-indigo-50/50">
+                <td colspan="5" class="p-4">
+                    <div class="flex gap-2 bg-white p-2 rounded-2xl shadow-sm border border-indigo-100">
+                        <input id="edit-desc" type="text" value="${d.desc}" class="flex-1 p-2 text-xs font-bold rounded-lg bg-slate-50">
+                        <input id="edit-valor" type="number" value="${d.valor}" class="w-24 p-2 text-xs font-black rounded-lg bg-slate-50">
+                        <button onclick="salvarEdicao(${index})" class="bg-emerald-500 text-white px-4 rounded-xl text-[10px] font-black">SALVAR</button>
+                        <button onclick="setEditMode(null)" class="text-slate-400 px-2">X</button>
+                    </div>
+                </td>
+            </tr>`;
+        }
+
+        // --- RENDERS FIXAS ---
+        function renderFixaNormal(f, index) {
+            return `<div class="flex justify-between items-center p-6 glass-card border-l-4 border-l-indigo-500 group transition-all hover:translate-x-1">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500">📌</div>
+                    <div>
+                        <span class="font-black text-slate-800 uppercase text-xs">${f.desc}</span>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">${f.local || 'Geral'}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <span class="font-black text-slate-900 italic text-lg">R$ ${f.valor.toFixed(2)}</span>
+                    <div class="flex gap-3 opacity-0 group-hover:opacity-100 transition-all">
+                        <button onclick="setEditModeFixa(${index})" class="text-indigo-400">✏️</button>
+                        <button onclick="removerFixa(${index})" class="text-red-300 hover:text-red-500">✕</button>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function renderFixaEdicao(f, index) {
+            return `<div class="p-6 glass-card border-l-4 border-l-emerald-500 bg-emerald-50/10">
+                <div class="flex gap-4">
+                    <input id="edit-fixa-desc" type="text" value="${f.desc}" class="flex-1 p-3 rounded-xl text-xs font-bold">
+                    <input id="edit-fixa-valor" type="number" value="${f.valor}" class="w-32 p-3 rounded-xl text-xs font-black">
+                    <button onclick="salvarEdicaoFixa(${index})" class="bg-emerald-500 text-white px-6 rounded-xl text-[10px] font-black uppercase">OK</button>
+                    <button onclick="setEditModeFixa(null)" class="text-slate-400">CANCELAR</button>
+                </div>
+            </div>`;
+        }
+
+        // --- LÓGICA E ESTADOS ---
+        function mostrarAba(aba) {
+            document.getElementById("abaVariaveis").classList.toggle("hidden", aba !== 'variaveis');
+            document.getElementById("abaFixas").classList.toggle("hidden", aba !== 'fixas');
+            document.getElementById("tituloPagina").innerText = aba === 'variaveis' ? 'Dashboard de Variáveis' : 'Custos Recorrentes';
+            document.getElementById("btn-variaveis").className = `sidebar-item w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${aba === 'variaveis' ? 'sidebar-active' : 'text-slate-500'}`;
+            document.getElementById("btn-fixas").className = `sidebar-item w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${aba === 'fixas' ? 'sidebar-active' : 'text-slate-500'}`;
+        }
+
+        function add() {
+            const valor = parseFloat(document.getElementById("valor").value);
+            const desc = document.getElementById("desc").value;
+            if (!valor || !desc) return alert("Preencha campos!");
+            const d = { 
+                data: document.getElementById("data").value, 
+                desc, 
+                local: document.getElementById("local").value, 
+                valor, 
+                pagamento: document.getElementById("pagamento").value,
+                hora: document.getElementById("hora").value 
+            };
+            if (!bancoDeDados[periodoAtual]) bancoDeDados[periodoAtual] = [];
+            bancoDeDados[periodoAtual].push(d);
+            localStorage.setItem("financeiro_db", JSON.stringify(bancoDeDados));
+            renderizarTudo();
+        }
+
+        function addFixa() {
+            const desc = document.getElementById("fixaDesc").value;
+            const valor = parseFloat(document.getElementById("fixaValor").value);
+            if (!desc || isNaN(valor)) return alert("Preencha os campos!");
+            despesasFixas.push({ desc, valor, local: document.getElementById("fixaLocal").value });
+            localStorage.setItem("fixas", JSON.stringify(despesasFixas));
+            renderizarTudo();
+        }
+
+        function setEditMode(idx) { indexEditando = idx; renderizarTudo(); }
+        function salvarEdicao(idx) {
+            bancoDeDados[periodoAtual][idx].desc = document.getElementById("edit-desc").value;
+            bancoDeDados[periodoAtual][idx].valor = parseFloat(document.getElementById("edit-valor").value) || 0;
+            localStorage.setItem("financeiro_db", JSON.stringify(bancoDeDados));
+            indexEditando = null; renderizarTudo();
+        }
+
+        function setEditModeFixa(idx) { indexEditandoFixa = idx; renderizarTudo(); }
+        function salvarEdicaoFixa(idx) {
+            despesasFixas[idx].desc = document.getElementById("edit-fixa-desc").value;
+            despesasFixas[idx].valor = parseFloat(document.getElementById("edit-fixa-valor").value) || 0;
+            localStorage.setItem("fixas", JSON.stringify(despesasFixas));
+            indexEditandoFixa = null; renderizarTudo();
+        }
+
+        function removerFixa(idx) { despesasFixas.splice(idx, 1); localStorage.setItem("fixas", JSON.stringify(despesasFixas)); renderizarTudo(); }
+        function definirLimite() { limite = parseFloat(document.getElementById("limiteInput").value) || 0; localStorage.setItem("limite", limite); renderizarTudo(); }
+        function fecharModal() { document.getElementById("modalOverlay").style.display = "none"; }
+        function confirmarRemocao(idx) {
+            document.getElementById("modalOverlay").style.display = "flex";
+            document.getElementById("btnConfirmarDeletar").onclick = () => {
+                bancoDeDados[periodoAtual].splice(idx, 1);
+                localStorage.setItem("financeiro_db", JSON.stringify(bancoDeDados));
+                renderizarTudo(); fecharModal();
+            };
+        }
+
+        function getBadgeClass(pag) {
+            if (pag === 'Pix') return 'badge-pix';
+            if (pag.includes('Alice')) return 'badge-alice';
+            if (pag.includes('Lucas')) return 'badge-lucas';
+            return 'badge-debito';
+        }
+
+        function atualizarResumos(total, pag, loc) {
+            document.getElementById("total").innerText = "R$ " + total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            let saldo = limite - total;
+            document.getElementById("saldoLimite").innerText = `Disponível: R$ ${saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            let percent = limite > 0 ? (total / limite) * 100 : 0;
+            document.getElementById("progressFill").style.width = Math.min(percent, 100) + "%";
             
-            <div class="bg-slate-900 p-6 rounded-[3rem] shadow-xl border border-white/10">
-                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Gasto Acumulado</span>
-                <span id="total" class="text-3xl font-black text-white italic tracking-tighter">R$ 0,00</span>
-            </div>
-        </div>
+            renderizarListaLateral("totaisPag", pag, "border-l-indigo-500");
+            renderizarListaLateral("totaisLocal", loc, "border-l-amber-400");
+        }
 
-        <div class="flex flex-col flex-1 gap-6 overflow-hidden">
-            <div class="flex flex-col">
-                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-blue-500"></span> Canais de Saída
-                </h4>
-                <div id="totaisPag" class="scroll-list"></div>
-            </div>
-
-            <div class="flex flex-col">
-                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-amber-500"></span> Principais Locais
-                </h4>
-                <div id="totaisLocal" class="scroll-list"></div>
-            </div>
-        </div>
-        
-        <div class="pt-4 border-t border-slate-200 text-center">
-            <p class="text-[9px] font-bold text-slate-300 uppercase tracking-[0.3em]">FinanceiroCore © 2026</p>
-        </div>
-    </aside>
-
-    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-    <script src="app.js"></script>
+        function renderizarListaLateral(id, obj, border) {
+            const container = document.getElementById(id);
+            if(!container) return;
+            container.innerHTML = Object.entries(obj).sort((a,b) => b[1]-a[1]).map(([key, val]) => `
+                <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border-l-4 ${border}">
+                    <span class="text-[9px] font-black text-slate-400 uppercase truncate mr-2">${key}</span>
+                    <span class="text-xs font-black text-slate-800 italic">R$ ${val.toFixed(2)}</span>
+                </div>
+            `).join("");
+        }
+    </script>
 </body>
 </html>
