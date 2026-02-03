@@ -81,6 +81,7 @@ aside {
 /* Layout Container */
 
 main {
+  padding-bottom: 80px !important;
   flex-grow: 1;
 
   padding: 1.5rem;
@@ -96,6 +97,9 @@ main {
   gap: 1rem;
 
   overflow-y: auto;
+}
+kbd {
+  font-family: "Plus Jakarta Sans", sans-serif;
 }
 
 .table-container {

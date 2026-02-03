@@ -11,10 +11,21 @@
         .sidebar-item:hover { background: rgba(99, 102, 241, 0.1); color: #4f46e5; }
         .sidebar-active { background: #4f46e5; color: white !important; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4); }
         .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.8); }
+        
+        /* Badges */
         .badge-pix { background: #ecfdf5; color: #059669; border: 1px solid #10b98133; }
         .badge-credito-alice { background: #eef2ff; color: #4f46e5; border: 1px solid #6366f133; }
         .badge-credito-lucas { background: #fff7ed; color: #ea580c; border: 1px solid #f9731633; }
         .badge-debito { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+        
+        /* Premium Inputs */
+        .input-premium {
+            @apply p-3.5 bg-slate-50/50 rounded-xl border-2 border-transparent text-xs font-bold text-slate-700 
+            transition-all duration-300 outline-none placeholder:text-slate-300 w-full;
+        }
+        .input-premium:focus {
+            @apply bg-white border-indigo-500 shadow-lg shadow-indigo-100 -translate-y-0.5;
+        }
         
         .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
@@ -32,7 +43,7 @@
             </div>
             <div>
                 <h1 class="text-lg font-black tracking-tight leading-none text-slate-800">FinanceiroCore</h1>
-                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">Enterprise v7.7</p>
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">Enterprise v8.1</p>
             </div>
         </div>
     
@@ -58,14 +69,14 @@
             </div>
     
             <div class="px-2 space-y-2">
-                <button onclick="exportarDados()" class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-all group">
+                <button onclick="exportarDados()" class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-all group text-left">
                     <div class="flex items-center gap-3">
                         <span class="text-xs group-hover:scale-110 transition-transform">📄</span>
                         <span class="text-[11px] font-bold text-slate-500 group-hover:text-slate-700">Exportar CSV</span>
                     </div>
                     <span class="text-[8px] text-slate-300">→</span>
                 </button>
-                <button onclick="abrirConfig()" class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-all group">
+                <button onclick="abrirConfig()" class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-all group text-left">
                     <div class="flex items-center gap-3">
                         <span class="text-xs group-hover:scale-110 transition-transform">⚙️</span>
                         <span class="text-[11px] font-bold text-slate-500 group-hover:text-slate-700">Configurações</span>
@@ -77,11 +88,11 @@
     
         <div class="p-4 bg-slate-50 rounded-[2rem] border border-slate-100">
             <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Limite Mensal</p>
-            <input type="number" id="limiteInput" onchange="definirLimite()" class="w-full bg-transparent text-lg font-black text-slate-900 focus:outline-none" placeholder="3447">
+            <input type="number" id="limiteInput" onchange="definirLimite()" class="w-full bg-transparent text-lg font-black text-slate-900 focus:outline-none" placeholder="0.00">
             <div class="w-full bg-slate-200 h-1.5 rounded-full mt-3 overflow-hidden">
-                <div id="progressFill" class="h-full transition-all duration-700 bg-red-500" style="width: 85%"></div>
+                <div id="progressFill" class="h-full transition-all duration-700 bg-indigo-600" style="width: 0%"></div>
             </div>
-            <p id="saldoLimite" class="font-bold mt-2 text-[10px] text-red-600">Disponível: R$ 447,00</p>
+            <p id="saldoLimite" class="font-bold mt-2 text-[10px] text-slate-500">Aguardando dados...</p>
         </div>
     </aside>
 
@@ -101,49 +112,84 @@
             <div class="col-span-12 lg:col-span-9 space-y-6">
                 
                 <div id="abaVariaveis" class="space-y-6">
-                    <div class="glass-card rounded-[2.5rem] p-6 shadow-sm border-slate-200/60">
-                        <div id="formAdd" class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <input id="data" type="date" class="p-3.5 bg-slate-50 rounded-xl border-none text-xs font-bold">
-                            <input id="desc" type="text" placeholder="Descrição" class="p-3.5 bg-slate-50 rounded-xl border-none text-xs font-bold">
-                            <input id="local" type="text" placeholder="Local" class="p-3.5 bg-slate-50 rounded-xl border-none text-xs font-bold">
-                            <input id="valor" type="number" placeholder="Valor R$" class="p-3.5 bg-slate-50 rounded-xl border-none text-xs font-black">
-                            <select id="pagamento" class="p-3.5 bg-slate-50 rounded-xl border-none text-xs font-bold appearance-none">
-                                <option>Pix</option><option>Débito</option>
-                                <option>Crédito Alice</option><option>Crédito Lucas</option>
-                            </select>
-                            <select id="parcelas" class="p-3.5 bg-slate-50 rounded-xl border-none text-xs font-black italic">
-                                <option value="1">À Vista</option><option value="2">2x</option>
-                                <option value="3">3x</option><option value="6">6x</option><option value="12">12x</option>
-                            </select>
-                            <input id="hora" type="time" class="p-3.5 bg-slate-50 rounded-xl border-none text-xs font-bold">
-                            <button onclick="add()" class="bg-indigo-600 text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg hover:bg-indigo-700 transition-all">Registrar</button>
-                        </div>
+                    <div class="bg-indigo-50/50 rounded-[2.5rem] p-8 shadow-inner border border-indigo-100/50">
+                        <div id="formAdd" class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Data</label>
+                                <input id="data" type="date" class="input-premium">
+                            </div>
+                            <div class="flex flex-col gap-1.5 md:col-span-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">O que comprou?</label>
+                                <input id="desc" type="text" placeholder="Ex: Farmácia" class="input-premium">
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Valor R$</label>
+                                <input id="valor" type="number" placeholder="0,00" class="input-premium font-black text-indigo-600">
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Local</label>
+                                <input id="local" type="text" placeholder="Ex: Centro" class="input-premium">
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Meio de Pagto</label>
+                                <select id="pagamento" class="input-premium appearance-none">
+                                    <option>Pix</option>
+                                    <option>Débito</option>
+                                    <option>Crédito Alice</option>
+                                    <option>Crédito Lucas</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Parcelamento</label>
+                                <select id="parcelas" class="input-premium italic">
+                                    <option value="1">À Vista</option>
+                                    <option value="2">2x</option><option value="3">3x</option><option value="4">4x</option>
+                                    <option value="5">5x</option><option value="6">6x</option><option value="8">8x</option>
+                                    <option value="10">10x</option>
+                                    <option value="12">12x (1 ano)</option><option value="18">18x</option>
+                                    <option value="24">24x (2 anos)</option><option value="36">36x (3 anos)</option>
+                                    <option value="48">48x (4 anos)</option><option value="60">60x (5 anos)</option>
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="add()" class="w-full h-[52px] bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all">Registrar</button>
+                            </div>
+                            <input id="hora" type="hidden"> </div>
                     </div>
 
-                    <div class="glass-card rounded-[2.5rem] overflow-hidden shadow-sm border-slate-200/60">
+                    <div class="glass-card rounded-[2.5rem] overflow-hidden shadow-sm border-slate-200/60 bg-white">
                         <table class="w-full text-left">
                             <thead class="bg-slate-50/80 border-b border-slate-100">
                                 <tr>
-                                    <th class="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Compra</th>
-                                    <th class="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Vencimento</th>
-                                    <th class="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Descrição</th>
-                                    <th class="px-6 py-5 text-center text-[9px] font-black text-slate-400 uppercase tracking-widest">Meio</th>
-                                    <th class="px-6 py-5 text-right text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor</th>
-                                    <th class="px-6 py-5 text-center text-[9px] font-black text-slate-400 uppercase tracking-widest">Ações</th>
+                                    <th class="px-8 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Compra</th>
+                                    <th class="px-8 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Hora</th>
+                                    <th class="px-8 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">Descrição</th>
+                                    <th class="px-8 py-5 text-center text-[9px] font-black text-slate-400 uppercase tracking-widest">Meio</th>
+                                    <th class="px-8 py-5 text-right text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor</th>
+                                    <th class="px-8 py-5 text-center text-[9px] font-black text-slate-400 uppercase tracking-widest">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="tabela" class="divide-y divide-slate-50"></tbody>
                         </table>
+                        <div id="paginacaoVariaveis"></div>
                     </div>
                 </div>
 
                 <div id="abaFixas" class="hidden space-y-6">
-                    <div class="glass-card rounded-[2.5rem] p-6 shadow-sm border-slate-200/60">
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                            <input id="fixaDesc" type="text" placeholder="Nome do Gasto (Ex: Aluguel)" class="p-3.5 bg-slate-50 rounded-xl border-none text-xs font-bold">
-                            <input id="fixaLocal" type="text" placeholder="Local/Categoria" class="p-3.5 bg-slate-50 rounded-xl border-none text-xs font-bold">
-                            <input id="fixaValor" type="number" placeholder="Valor R$" class="p-3.5 bg-slate-50 rounded-xl border-none text-xs font-black">
-                            <button onclick="add()" class="bg-indigo-600 text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg hover:bg-indigo-700 transition-all">Registrar Fixo</button>
+                    <div class="glass-card rounded-[2.5rem] p-8 shadow-sm border-slate-200/60">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div class="flex flex-col gap-1.5 md:col-span-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Nome do Gasto</label>
+                                <input id="fixaDesc" type="text" placeholder="Ex: Aluguel" class="input-premium">
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Valor Fixo R$</label>
+                                <input id="fixaValor" type="number" placeholder="0,00" class="input-premium font-black">
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="add()" class="w-full h-[52px] bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-indigo-700 transition-all">Salvar Fixo</button>
+                            </div>
                         </div>
                     </div>
                     <div id="listaFixas" class="space-y-3"></div>
@@ -154,7 +200,7 @@
             <div class="col-span-12 lg:col-span-3 space-y-4">
                 <div class="glass-card rounded-[2rem] p-6 shadow-sm">
                     <h5 class="text-[9px] font-black text-slate-400 uppercase mb-4 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-indigo-600"></span> Pagamento
+                        <span class="w-2 h-2 rounded-full bg-indigo-600"></span> Por Meio
                     </h5>
                     <div id="totaisPag" class="space-y-2"></div>
                 </div>
@@ -192,10 +238,38 @@
             <p id="modalMensagem" class="text-slate-500 text-sm mb-8">Esta ação removerá o gasto e atualizará os totais.</p>
             <div class="flex gap-3">
                 <button onclick="fecharModal()" class="flex-1 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-50 transition-all text-xs uppercase">Cancelar</button>
-                <button id="btnConfirmarDeletar" class="flex-1 py-3 bg-red-50 text-white rounded-xl font-black shadow-lg shadow-red-100 hover:bg-red-600 transition-all text-xs uppercase">Confirmar</button>
+                <button id="btnConfirmarDeletar" class="flex-1 py-3 bg-red-600 text-white rounded-xl font-black shadow-lg shadow-red-100 hover:bg-red-700 transition-all text-xs uppercase">Confirmar</button>
             </div>
         </div>
     </div>
+    <footer class="fixed bottom-0 right-0 left-64 bg-white/80 backdrop-blur-md border-t border-slate-200 px-8 py-3 z-40 flex justify-between items-center">
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Database Online</span>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-4 border-l border-slate-200 pl-6">
+                <div class="flex items-center gap-1.5">
+                    <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[9px] font-black text-slate-500 shadow-sm">ALT</kbd>
+                    <span class="text-[10px] font-bold text-slate-400">+</span>
+                    <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[9px] font-black text-slate-500 shadow-sm">N</kbd>
+                    <span class="text-[10px] font-bold text-slate-400 ml-1">Novo Gasto</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="flex items-center gap-8">
+            <div class="text-right">
+                <p class="text-[9px] font-black text-slate-400 uppercase leading-none">FinanceiroCore Engine</p>
+                <p class="text-[10px] font-bold text-indigo-600">Build v8.1.0_PROD</p>
+            </div>
+    
+            <button class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-xs hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
+                ❓
+            </button>
+        </div>
+    </footer>
 
     <script src="app.js"></script>
 </body>
