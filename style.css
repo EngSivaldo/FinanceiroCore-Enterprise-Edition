@@ -315,3 +315,7 @@ input:focus {
 section {
   animation: fadeIn 0.5s ease-out forwards;
 }
+
+.font-mono {
+  color: #1e293b; /* Um cinza bem escuro quase preto */
+}
